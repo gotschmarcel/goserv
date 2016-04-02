@@ -39,6 +39,46 @@ func (r *Router) MethodFunc(method, path string, funcs ...func(ResponseWriter, *
 	return r.addHandler(r.Route(path).MethodFunc(method, funcs...))
 }
 
+func (r *Router) Get(path string, handlers ...Handler) *Router {
+	return r.Method(http.MethodGet, path, handlers...)
+}
+
+func (r *Router) GetFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.MethodFunc(http.MethodGet, path, funcs...)
+}
+
+func (r *Router) Post(path string, handlers ...Handler) *Router {
+	return r.Method(http.MethodPost, path, handlers...)
+}
+
+func (r *Router) PostFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.MethodFunc(http.MethodPost, path, funcs...)
+}
+
+func (r *Router) Put(path string, handlers ...Handler) *Router {
+	return r.Method(http.MethodPut, path, handlers...)
+}
+
+func (r *Router) PutFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.MethodFunc(http.MethodPut, path, funcs...)
+}
+
+func (r *Router) Delete(path string, handlers ...Handler) *Router {
+	return r.Method(http.MethodDelete, path, handlers...)
+}
+
+func (r *Router) DeleteFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.MethodFunc(http.MethodDelete, path, funcs...)
+}
+
+func (r *Router) Patch(path string, handlers ...Handler) *Router {
+	return r.Method(http.MethodPatch, path, handlers...)
+}
+
+func (r *Router) PatchFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.MethodFunc(http.MethodPatch, path, funcs...)
+}
+
 func (r *Router) Param(name string, handler ParamHandler) *Router {
 	r.paramHandlers[name] = append(r.paramHandlers[name], handler)
 	return r
@@ -80,6 +120,12 @@ func (r *Router) Mount(prefix string, router *Router) *Router {
 	router.pathMatcher = matcher
 
 	return r.addHandler(router)
+}
+
+func (r *Router) Router(prefix string) *Router {
+	child := NewRouter()
+	r.Mount(prefix, child)
+	return child
 }
 
 func (r *Router) Route(path string) *Route {
@@ -125,7 +171,7 @@ func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
 		}
 
 		req.Params = handler.params(path)
-		if !r.handleParams(res, req, paramHandlerInvoked) {
+		if req.Params != nil && !r.handleParams(res, req, paramHandlerInvoked) {
 			return
 		}
 
@@ -182,7 +228,7 @@ func NewRouter() *Router {
 	return &Router{paramHandlers: make(paramHandlerMap)}
 }
 
-func NewMainRouter() *Router {
+func NewServer() *Router {
 	r := NewRouter()
 	r.ErrorHandler = defaultErrorHandler
 	return r

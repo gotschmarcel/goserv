@@ -17,10 +17,10 @@ func accessLogger(res goserv.ResponseWriter, req *goserv.Request) {
 }
 
 func ExampleSimpleServer() {
-	server := goserv.NewMainRouter()
+	server := goserv.NewServer()
 
 	server.UseFunc(accessLogger)
-	server.MethodFunc(http.MethodGet, "/", func(res goserv.ResponseWriter, req *goserv.Request) {
+	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
 		fmt.Fprint(res, "Home")
 	})
 
@@ -55,15 +55,14 @@ func (m *MyController) paramUserID(res goserv.ResponseWriter, req *goserv.Reques
 
 func ExampleAPISubrouter() {
 	controller := &MyController{"MyApp", log.New(os.Stderr, "[main] ", log.LstdFlags)}
-	server := goserv.NewMainRouter()
-
-	apiRouter := goserv.NewRouter()
-	apiRouter.MethodFunc(http.MethodGet, "/users", controller.getUsers)
-	apiRouter.MethodFunc(http.MethodGet, "/users/:user_id", controller.getUser)
-	apiRouter.Param("user_id", controller.paramUserID)
+	server := goserv.NewServer()
 
 	server.UseFunc(controller.logName)
-	server.Mount("/api", apiRouter)
+	apiRouter := server.Router("/api")
+
+	apiRouter.GetFunc("/users", controller.getUsers)
+	apiRouter.GetFunc("/users/:user_id", controller.getUser)
+	apiRouter.Param("user_id", controller.paramUserID)
 
 	log.Fatalln(http.ListenAndServe(":8080", server))
 }

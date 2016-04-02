@@ -43,6 +43,46 @@ func (r *Route) MethodFunc(method string, funcs ...func(ResponseWriter, *Request
 	return r
 }
 
+func (r *Route) Get(handlers ...Handler) *Route {
+	return r.Method(http.MethodGet, handlers...)
+}
+
+func (r *Route) GetFunc(funcs ...func(ResponseWriter, *Request)) *Route {
+	return r.MethodFunc(http.MethodGet, funcs...)
+}
+
+func (r *Route) Post(handlers ...Handler) *Route {
+	return r.Method(http.MethodPost, handlers...)
+}
+
+func (r *Route) PostFunc(funcs ...func(ResponseWriter, *Request)) *Route {
+	return r.MethodFunc(http.MethodPost, funcs...)
+}
+
+func (r *Route) Put(handlers ...Handler) *Route {
+	return r.Method(http.MethodPut, handlers...)
+}
+
+func (r *Route) PutFunc(funcs ...func(ResponseWriter, *Request)) *Route {
+	return r.MethodFunc(http.MethodPut, funcs...)
+}
+
+func (r *Route) Delete(handlers ...Handler) *Route {
+	return r.Method(http.MethodDelete, handlers...)
+}
+
+func (r *Route) DeleteFunc(funcs ...func(ResponseWriter, *Request)) *Route {
+	return r.MethodFunc(http.MethodDelete, funcs...)
+}
+
+func (r *Route) Patch(handlers ...Handler) *Route {
+	return r.Method(http.MethodPatch, handlers...)
+}
+
+func (r *Route) PatchFunc(funcs ...func(ResponseWriter, *Request)) *Route {
+	return r.MethodFunc(http.MethodPatch, funcs...)
+}
+
 func (r *Route) match(path string) bool {
 	return r.components.MatchString(path)
 }
