@@ -10,7 +10,8 @@ import (
 
 type Request struct {
 	*http.Request
-	Context *Context
-	Locals  Locals
-	Params  Params
+	Context       *Context
+	Locals        Locals
+	Params        Params
+	SanitizedPath string
 }

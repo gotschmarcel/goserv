@@ -17,7 +17,7 @@ func accessLogger(res goserv.ResponseWriter, req *goserv.Request) {
 }
 
 func ExampleSimpleServer() {
-	server := goserv.NewServer()
+	server := goserv.NewRouter()
 
 	server.UseFunc(accessLogger)
 	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
@@ -55,14 +55,14 @@ func (m *MyController) paramUserID(res goserv.ResponseWriter, req *goserv.Reques
 
 func ExampleAPISubrouter() {
 	controller := &MyController{"MyApp", log.New(os.Stderr, "[main] ", log.LstdFlags)}
-	server := goserv.NewServer()
+	server := goserv.NewRouter()
 
 	server.UseFunc(controller.logName)
 	apiRouter := server.Router("/api")
 
 	apiRouter.GetFunc("/users", controller.getUsers)
 	apiRouter.GetFunc("/users/:user_id", controller.getUser)
-	apiRouter.Param("user_id", controller.paramUserID)
+	apiRouter.ParamFunc("user_id", controller.paramUserID)
 
 	log.Fatalln(http.ListenAndServe(":8080", server))
 }

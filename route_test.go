@@ -13,7 +13,7 @@ import (
 func TestRouteHandlerChain(t *testing.T) {
 	w := httptest.NewRecorder()
 	res := &responseWriter{w: w}
-	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, nil}
+	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, nil, "/"}
 	history := &historyWriter{}
 
 	route, err := newRoute("/", false)

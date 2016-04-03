@@ -40,23 +40,23 @@ func TestParsePathString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c, err := parsePathString(test.path, test.strict)
+		c, err := parsePath(test.path, test.strict)
 		if err != nil {
 			t.Errorf("Error with path '%s', %v", test.path, err)
 			continue
 		}
 
-		if !c.MatchString(test.p) {
+		if !c.match(test.p) {
 			t.Errorf("Path did not match: %s != %s", test.p, test.path)
 			continue
 		}
 
-		if c.MatchString(test.n) {
+		if c.match(test.n) {
 			t.Errorf("Path did match: %s == %s", test.n, test.path)
 			continue
 		}
 
-		params := c.Params(test.p)
+		params := c.parseParams(test.p)
 		for name, value := range test.params {
 			if !stringInSlice(name, c.params) {
 				t.Errorf("Missing param name: %s, %v", name, c.params)

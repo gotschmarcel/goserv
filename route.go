@@ -7,7 +7,7 @@ package goserv
 import "net/http"
 
 type Route struct {
-	components *pathComponents
+	*pathComponents
 	middleware []Handler
 	methods    map[string][]Handler
 }
@@ -83,14 +83,6 @@ func (r *Route) PatchFunc(funcs ...func(ResponseWriter, *Request)) *Route {
 	return r.MethodFunc(http.MethodPatch, funcs...)
 }
 
-func (r *Route) match(path string) bool {
-	return r.components.MatchString(path)
-}
-
-func (r *Route) params(path string) Params {
-	return r.components.Params(path)
-}
-
 func (r *Route) serveHTTP(res ResponseWriter, req *Request) {
 	for _, handler := range append(r.middleware, r.methods[req.Method]...) {
 		handler.ServeHTTP(res, req)
@@ -112,11 +104,11 @@ func (r *Route) addMethodHandlers(method string, handlers ...Handler) {
 func newRoute(path string, strictSlash bool) (*Route, error) {
 	r := &Route{methods: make(map[string][]Handler)}
 
-	pathComponents, err := parsePathString(path, strictSlash)
+	var err error
+	r.pathComponents, err = parsePath(path, strictSlash)
 	if err != nil {
 		return nil, err
 	}
 
-	r.components = pathComponents
 	return r, nil
 }

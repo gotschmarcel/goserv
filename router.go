@@ -7,16 +7,16 @@ package goserv
 import (
 	"fmt"
 	"net/http"
-	"regexp"
 )
 
 type Router struct {
-	ErrorHandler  ErrorHandler
-	StrictSlash   bool
+	ErrorHandler ErrorHandler
+	StrictSlash  bool
+
+	*pathComponents
 	path          string
-	pathMatcher   *regexp.Regexp
 	paramHandlers paramHandlerMap
-	handlers      []internalHandler
+	handlers      []pathHandler
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
@@ -84,47 +84,43 @@ func (r *Router) Param(name string, handler ParamHandler) *Router {
 	return r
 }
 
-func (r *Router) Use(handlers ...Handler) *Router {
-	for _, handler := range handlers {
-		r.addHandler(&middlewareHandler{handler})
-	}
+func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string)) *Router {
+	return r.Param(name, ParamHandlerFunc(fn))
+}
 
-	return r
+func (r *Router) Use(handlers ...Handler) *Router {
+	return r.addHandler(r.Route("*").All(handlers...))
 }
 
 func (r *Router) UseNative(handlers ...http.Handler) *Router {
-	for _, handler := range handlers {
-		r.addHandler(&middlewareHandler{nativeWrapper(handler)})
-	}
-
-	return r
+	return r.addHandler(r.Route("*").AllNative(handlers...))
 }
 
 func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
-	for _, fn := range funcs {
-		r.addHandler(&middlewareHandler{HandlerFunc(fn)})
-	}
-
-	return r
+	return r.addHandler(r.Route("*").AllFunc(funcs...))
 }
 
 func (r *Router) Mount(prefix string, router *Router) *Router {
 	path := fmt.Sprintf("%s%s", r.path, prefix)
 
-	matcher, err := prefixStringToRegexp(path)
+	var err error
+	router.pathComponents, err = parsePrefixPath(path)
 	if err != nil {
 		panic(err)
 	}
 
 	router.path = path
-	router.pathMatcher = matcher
 
 	return r.addHandler(router)
 }
 
 func (r *Router) Router(prefix string) *Router {
 	child := NewRouter()
+	child.ErrorHandler = nil
+	child.StrictSlash = r.StrictSlash
+
 	r.Mount(prefix, child)
+
 	return child
 }
 
@@ -142,35 +138,36 @@ func (r *Router) Path() string {
 
 func (r *Router) ServeHTTP(nativeRes http.ResponseWriter, nativeReq *http.Request) {
 	res := &responseWriter{w: nativeRes}
-	req := &Request{nativeReq, &Context{}, nil, nil}
+	req := &Request{nativeReq, &Context{}, nil, nil, sanitizePath(nativeReq.URL.Path)}
+
 	r.serveHTTP(res, req)
+}
+
+func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
+	r.invokeHandlers(res, req)
 
 	if r.ErrorHandler == nil {
 		return
 	}
 
-	if err := res.Error(); err != nil {
-		r.ErrorHandler(res, req, err)
-		return
+	err := res.Error()
+	if err == nil && !res.Written() {
+		err = errNotFound
 	}
 
-	if !res.Written() {
-		r.ErrorHandler(res, req, errNotFound)
-		return
-	}
+	r.ErrorHandler.ServeHTTP(res, req, err)
 }
 
-func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
+func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	paramHandlerInvoked := make(map[string]bool)
-
-	path := req.URL.Path[len(r.path):] // Strip own prefix
+	path := req.SanitizedPath[len(r.path):] // Strip own prefix
 
 	for _, handler := range r.handlers {
 		if !handler.match(path) {
 			continue
 		}
 
-		req.Params = handler.params(path)
+		req.Params = handler.parseParams(path)
 		if req.Params != nil && !r.handleParams(res, req, paramHandlerInvoked) {
 			return
 		}
@@ -194,7 +191,7 @@ func (r *Router) handleParams(res ResponseWriter, req *Request, memory map[strin
 		}
 
 		for _, paramHandler := range r.paramHandlers[name] {
-			paramHandler(res, req, value)
+			paramHandler.ServeHTTP(res, req, value)
 
 			if res.Error() != nil {
 				return false
@@ -211,27 +208,16 @@ func (r *Router) handleParams(res ResponseWriter, req *Request, memory map[strin
 	return true
 }
 
-func (r *Router) match(path string) bool {
-	return r.pathMatcher.MatchString(path)
-}
-
-func (r *Router) params(path string) Params {
-	return nil
-}
-
-func (r *Router) addHandler(handler internalHandler) *Router {
+func (r *Router) addHandler(handler pathHandler) *Router {
 	r.handlers = append(r.handlers, handler)
 	return r
 }
 
 func NewRouter() *Router {
-	return &Router{paramHandlers: make(paramHandlerMap)}
-}
-
-func NewServer() *Router {
-	r := NewRouter()
-	r.ErrorHandler = defaultErrorHandler
-	return r
+	return &Router{
+		ErrorHandler:  ErrorHandlerFunc(defaultErrorHandler),
+		paramHandlers: make(paramHandlerMap),
+	}
 }
 
 type paramHandlerMap map[string][]ParamHandler

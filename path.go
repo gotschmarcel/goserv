@@ -21,20 +21,23 @@ type pathComponents struct {
 	params  []string
 }
 
-func (p *pathComponents) MatchString(path string) bool {
+func (p *pathComponents) match(path string) bool {
 	return p.matcher.MatchString(path)
 }
 
-func (p *pathComponents) Params(path string) Params {
-	params := Params{}
-	matches := p.matcher.FindAllStringSubmatch(path, -1)
-
-	if len(matches) == 0 {
-		return params
+func (p *pathComponents) parseParams(path string) Params {
+	if len(p.params) == 0 {
+		return nil
 	}
 
-	groups := matches[0][1:] // Remove full match
-	for index, value := range groups {
+	matches := p.matcher.FindAllStringSubmatch(path, -1)
+	if len(matches) == 0 {
+		return nil
+	}
+
+	// Iterate group matches only
+	params := Params{}
+	for index, value := range matches[0][1:] {
 		name := p.params[index]
 		params[name] = value
 	}
@@ -42,7 +45,7 @@ func (p *pathComponents) Params(path string) Params {
 	return params
 }
 
-func parsePathString(path string, strictSlash bool) (*pathComponents, error) {
+func parsePath(path string, strictSlash bool) (*pathComponents, error) {
 	var err error
 	c := &pathComponents{}
 
@@ -65,7 +68,7 @@ func pathStringToRegexp(path string, strictSlash bool) (*regexp.Regexp, error) {
 		pattern = maybeSlashSuffixMatcher.ReplaceAllString(pattern, "$1/?")
 	}
 
-	pattern = fmt.Sprintf("^%s$", pattern)
+	pattern = wholePattern(pattern)
 
 	return regexp.Compile(pattern)
 }
@@ -81,12 +84,29 @@ func pathStringParameters(path string) []string {
 	return params
 }
 
-func prefixStringToRegexp(prefix string) (*regexp.Regexp, error) {
+func parsePrefixPath(prefix string) (*pathComponents, error) {
+	var err error
+	c := &pathComponents{}
+
 	pattern := wildcardsToRegexp(prefix)
-	pattern = fmt.Sprintf("^%s", pattern)
-	return regexp.Compile(pattern)
+	pattern = prefixPattern(pattern)
+
+	c.matcher, err = regexp.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 func wildcardsToRegexp(path string) string {
 	return strings.Replace(path, "*", ".*", -1)
+}
+
+func wholePattern(pattern string) string {
+	return fmt.Sprintf("^%s$", pattern)
+}
+
+func prefixPattern(pattern string) string {
+	return fmt.Sprintf("^%s", pattern)
 }

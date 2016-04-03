@@ -16,38 +16,30 @@ func TestRouter(t *testing.T) {
 	h := &historyWriter{}
 
 	router := NewRouter()
-	subRouter := NewRouter()
-
 	router.UseFunc(func(res ResponseWriter, req *Request) {
 		h.WriteString("1")
-	})
-
-	router.AllFunc("/", func(res ResponseWriter, req *Request) {
+	}).AllFunc("/", func(res ResponseWriter, req *Request) {
 		h.WriteString("2")
-	}).MethodFunc(http.MethodGet, "/", func(res ResponseWriter, req *Request) {
+	}).GetFunc("/", func(res ResponseWriter, req *Request) {
 		h.WriteString("3")
 		res.Write([]byte("Done"))
-	}).MethodFunc(http.MethodPost, "/", func(res ResponseWriter, req *Request) {
+	}).PostFunc("/", func(res ResponseWriter, req *Request) {
 		h.WriteString("4")
 		res.SetError(fmt.Errorf("Error in 4"))
-	}).MethodFunc(http.MethodGet, "/dog", func(res ResponseWriter, req *Request) {
+	}).GetFunc("/dog", func(res ResponseWriter, req *Request) {
 		h.WriteString("5")
 		res.Write([]byte("Done"))
-	}).MethodFunc(http.MethodGet, "/dog/:id", func(res ResponseWriter, req *Request) {
+	}).GetFunc("/dog/:id", func(res ResponseWriter, req *Request) {
 		h.WriteString("6")
-	}).MethodFunc(http.MethodGet, "/dog/:id", func(res ResponseWriter, req *Request) {
+	}).GetFunc("/dog/:id", func(res ResponseWriter, req *Request) {
 		h.WriteString("7")
 		res.Write([]byte(req.Params.Get("id")))
-	}).Mount("/cat", subRouter)
-
-	router.Param("id", func(res ResponseWriter, req *Request, id string) {
+	}).ParamFunc("id", func(res ResponseWriter, req *Request, id string) {
 		h.WriteString(id)
-	})
-
-	subRouter.MethodFunc(http.MethodGet, "/ape", func(res ResponseWriter, req *Request) {
+	}).Router("/cat").GetFunc("/ape", func(res ResponseWriter, req *Request) {
 		h.WriteString("8")
 		res.Write([]byte("Done"))
-	}).MethodFunc(http.MethodGet, "/error", func(res ResponseWriter, req *Request) {
+	}).GetFunc("/error", func(res ResponseWriter, req *Request) {
 		h.WriteString("9")
 		res.SetError(fmt.Errorf("Error in 9"))
 	})
@@ -75,11 +67,12 @@ func TestRouter(t *testing.T) {
 		r.URL, _ = url.Parse(test.path)
 		h.Clear()
 
-		router.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
+		router.ErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, e error) {
 			err = e
-		}
+		})
 
 		router.ServeHTTP(w, r)
+
 		if test.err != nil && err == nil {
 			t.Errorf("Expected error in ServeHTTP, but there is none (no. %d)", index)
 		}
