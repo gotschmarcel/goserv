@@ -4,10 +4,33 @@
 
 package goserv
 
-import "net/http"
+import (
+	"net/http"
+	"path"
+	"strings"
+)
 
 func nativeWrapper(handler http.Handler) HandlerFunc {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		handler.ServeHTTP(http.ResponseWriter(res), req.Request)
 	})
+}
+
+func sanitizePath(p string) string {
+	if len(p) == 0 {
+		return "/"
+	}
+
+	if !strings.HasPrefix(p, "/") {
+		p = "/" + p
+	}
+
+	trailingSlash := strings.HasSuffix(p, "/")
+	p = path.Clean(p)
+
+	if p != "/" && trailingSlash {
+		p += "/"
+	}
+
+	return p
 }
