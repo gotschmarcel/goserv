@@ -19,31 +19,38 @@ type Router struct {
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
-	return r.addHandler(r.Route(path).All(handlers...))
+	r.Route(path).All(handlers...)
+	return r
 }
 
 func (r *Router) AllFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.addHandler(r.Route(path).AllFunc(funcs...))
+	r.Route(path).AllFunc(funcs...)
+	return r
 }
 
 func (r *Router) AllNative(path string, handlers ...http.Handler) *Router {
-	return r.addHandler(r.Route(path).AllNative(handlers...))
+	r.Route(path).AllNative(handlers...)
+	return r
 }
 
 func (r *Router) Method(method, path string, handlers ...Handler) *Router {
-	return r.addHandler(r.Route(path).Method(method, handlers...))
+	r.Route(path).Method(method, handlers...)
+	return r
 }
 
 func (r *Router) MethodFunc(method, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.addHandler(r.Route(path).MethodFunc(method, funcs...))
+	r.Route(path).MethodFunc(method, funcs...)
+	return r
 }
 
 func (r *Router) Methods(methods []string, path string, handlers ...Handler) *Router {
-	return r.addHandler(r.Route(path).Methods(methods, handlers...))
+	r.Route(path).Methods(methods, handlers...)
+	return r
 }
 
 func (r *Router) MethodsFunc(methods []string, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.addHandler(r.Route(path).MethodsFunc(methods, funcs...))
+	r.Route(path).MethodsFunc(methods, funcs...)
+	return r
 }
 
 func (r *Router) Get(path string, handlers ...Handler) *Router {
@@ -96,15 +103,18 @@ func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string
 }
 
 func (r *Router) Use(handlers ...Handler) *Router {
-	return r.addHandler(r.Route("*").All(handlers...))
+	r.Route("*").All(handlers...)
+	return r
 }
 
 func (r *Router) UseNative(handlers ...http.Handler) *Router {
-	return r.addHandler(r.Route("*").AllNative(handlers...))
+	r.Route("*").AllNative(handlers...)
+	return r
 }
 
 func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.addHandler(r.Route("*").AllFunc(funcs...))
+	r.Route("*").AllFunc(funcs...)
+	return r
 }
 
 func (r *Router) Mount(prefix string, router *Router) *Router {
@@ -134,6 +144,9 @@ func (r *Router) Route(path string) *Route {
 	if err != nil {
 		panic(err)
 	}
+
+	r.addHandler(route)
+
 	return route
 }
 
