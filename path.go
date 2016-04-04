@@ -45,6 +45,10 @@ func (p *pathComponents) parseParams(path string) Params {
 	return params
 }
 
+func (p *pathComponents) pattern() string {
+	return p.matcher.String()
+}
+
 func parsePath(path string, strictSlash bool) (*pathComponents, error) {
 	var err error
 	c := &pathComponents{}

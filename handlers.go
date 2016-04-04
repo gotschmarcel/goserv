@@ -37,6 +37,7 @@ func (p ParamHandlerFunc) ServeHTTP(res ResponseWriter, req *Request, value stri
 type pathHandler interface {
 	serveHTTP(ResponseWriter, *Request)
 	match(path string) bool
+	pattern() string
 	parseParams(path string) Params
 }
 
