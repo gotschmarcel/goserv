@@ -12,40 +12,68 @@ import (
 	"testing"
 )
 
+type historyHandler struct {
+	*historyWriter
+}
+
+func (h historyHandler) Handler(id string) Handler {
+	return HandlerFunc(func(ResponseWriter, *Request) {
+		h.WriteString(id)
+	})
+}
+
+func (h historyHandler) WriteHandler(id string) Handler {
+	return HandlerFunc(func(w ResponseWriter, r *Request) {
+		h.WriteString(id)
+		w.Write([]byte(id))
+	})
+}
+
+func (h historyHandler) ParamHandler() ParamHandler {
+	return ParamHandlerFunc(func(w ResponseWriter, r *Request, value string) {
+		h.WriteString(value)
+	})
+}
+
+func (h historyHandler) HandlerWithError(v string) Handler {
+	return HandlerFunc(func(w ResponseWriter, r *Request) {
+		w.SetError(fmt.Errorf(v))
+	})
+}
+
+func newHistoryHandler() *historyHandler {
+	return &historyHandler{&historyWriter{}}
+}
+
 func TestRouter(t *testing.T) {
-	h := &historyWriter{}
+	h := newHistoryHandler()
 
 	router := NewRouter()
-	router.UseFunc(func(res ResponseWriter, req *Request) {
-		h.WriteString("1")
-	}).AllFunc("/", func(res ResponseWriter, req *Request) {
-		h.WriteString("2")
-	}).GetFunc("/", func(res ResponseWriter, req *Request) {
-		h.WriteString("3")
-		res.Write([]byte("Done"))
-	}).PostFunc("/", func(res ResponseWriter, req *Request) {
-		h.WriteString("4")
-		res.SetError(fmt.Errorf("Error in 4"))
-	}).GetFunc("/dog", func(res ResponseWriter, req *Request) {
-		h.WriteString("5")
-		res.Write([]byte("Done"))
-	}).GetFunc("/dog/:id", func(res ResponseWriter, req *Request) {
-		h.WriteString("6")
-	}).GetFunc("/dog/:id", func(res ResponseWriter, req *Request) {
-		h.WriteString("7")
-		res.Write([]byte(req.Params.Get("id")))
-	}).ParamFunc("id", func(res ResponseWriter, req *Request, id string) {
-		h.WriteString(id)
-	}).Router("/cat").GetFunc("/ape", func(res ResponseWriter, req *Request) {
-		h.WriteString("8")
-		res.Write([]byte("Ape"))
-	}).GetFunc("/error", func(res ResponseWriter, req *Request) {
-		h.WriteString("9")
-		res.SetError(fmt.Errorf("Error in 9"))
-	}).Router("/dog").GetFunc("/squirrel", func(res ResponseWriter, req *Request) {
-		h.WriteString("10")
-		res.Write([]byte("Squirrel"))
-	})
+
+	// Register middleware
+	router.Use(h.Handler("middleware"))
+
+	// Register all handlers
+	router.All("/", h.Handler("all-handler"))
+
+	// Register simple method path
+	router.Get("/", h.WriteHandler("get-handler"))
+
+	// Register multi-method path
+	router.Methods([]string{http.MethodGet, http.MethodDelete}, "/multi", h.WriteHandler("multi-handler"))
+
+	// Register route
+	router.Route("/route").Get(h.WriteHandler("route-handler"))
+
+	// Register parameter routes
+	router.Get("/param1/:value1/param2/:value2", h.Handler("param-route1"))
+	router.Get("/param1/:value1/param2/:value2", h.WriteHandler("param-route2"))
+	router.Param("value1", h.ParamHandler())
+	router.Param("value2", h.ParamHandler())
+
+	// Register sub routers
+	sr1 := router.Router("/srouter1").Get("/get", h.WriteHandler("srouter1-handler"))
+	sr1.Router("/srouter2").Get("/get", h.WriteHandler("srouter2-handler")).Get("/error", h.HandlerWithError("srouter2-error"))
 
 	tests := []struct {
 		method string
@@ -54,13 +82,20 @@ func TestRouter(t *testing.T) {
 		body   string
 		err    error
 	}{
-		{http.MethodGet, "/", []string{"1", "2", "3"}, "Done", nil},
-		{http.MethodPost, "/", []string{"1", "2", "4"}, "", fmt.Errorf("Error in 4")},
-		{http.MethodGet, "/dog", []string{"1", "5"}, "Done", nil},
-		{http.MethodGet, "/dog/123456", []string{"1", "123456", "6", "7"}, "123456", nil},
-		{http.MethodGet, "/cat/ape", []string{"1", "8"}, "Ape", nil},
-		{http.MethodGet, "/cat/error", []string{"1", "9"}, "", fmt.Errorf("Error in 9")},
-		{http.MethodGet, "/cat/dog/squirrel", []string{"1", "10"}, "Squirrel", nil},
+		{http.MethodGet, "/", []string{"middleware", "all-handler", "get-handler"}, "get-handler", nil},
+		{http.MethodPost, "/", []string{"middleware", "all-handler"}, "", errNotFound},
+
+		{http.MethodGet, "/multi", []string{"middleware", "multi-handler"}, "multi-handler", nil},
+		{http.MethodDelete, "/multi", []string{"middleware", "multi-handler"}, "multi-handler", nil},
+		{http.MethodPost, "/multi", []string{"middleware"}, "", errNotFound},
+
+		{http.MethodGet, "/route", []string{"middleware", "route-handler"}, "route-handler", nil},
+
+		{http.MethodGet, "/param1/123/param2/456", []string{"middleware", "123", "456", "param-route1", "param-route2"}, "param-route2", nil},
+
+		{http.MethodGet, "/srouter1/get", []string{"middleware", "srouter1-handler"}, "srouter1-handler", nil},
+		{http.MethodGet, "/srouter1/srouter2/get", []string{"middleware", "srouter2-handler"}, "srouter2-handler", nil},
+		{http.MethodGet, "/srouter1/srouter2/error", []string{"middleware"}, "", fmt.Errorf("srouter2-error")},
 	}
 
 	for index, test := range tests {
@@ -94,7 +129,7 @@ func TestRouter(t *testing.T) {
 		}
 
 		if len(test.writes) != h.Len() {
-			t.Errorf("Wrong write count %d != %d, %v (no. %d)", len(test.writes), h.Len(), h.writes, index)
+			t.Errorf("Wrong write count %d != %d, %v (no. %d)", h.Len(), len(test.writes), h.writes, index)
 			continue
 		}
 
