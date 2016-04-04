@@ -38,6 +38,14 @@ func (r *Router) MethodFunc(method, path string, funcs ...func(ResponseWriter, *
 	return r.addHandler(r.Route(path).MethodFunc(method, funcs...))
 }
 
+func (r *Router) Methods(methods []string, path string, handlers ...Handler) *Router {
+	return r.addHandler(r.Route(path).Methods(methods, handlers...))
+}
+
+func (r *Router) MethodsFunc(methods []string, path string, funcs ...func(ResponseWriter, *Request)) *Router {
+	return r.addHandler(r.Route(path).MethodsFunc(methods, funcs...))
+}
+
 func (r *Router) Get(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodGet, path, handlers...)
 }

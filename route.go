@@ -43,6 +43,20 @@ func (r *Route) MethodFunc(method string, funcs ...func(ResponseWriter, *Request
 	return r
 }
 
+func (r *Route) Methods(methods []string, handlers ...Handler) *Route {
+	for _, method := range methods {
+		r.Method(method, handlers...)
+	}
+	return r
+}
+
+func (r *Route) MethodsFunc(methods []string, funcs ...func(ResponseWriter, *Request)) *Route {
+	for _, method := range methods {
+		r.MethodFunc(method, funcs...)
+	}
+	return r
+}
+
 func (r *Route) Get(handlers ...Handler) *Route {
 	return r.Method(http.MethodGet, handlers...)
 }
