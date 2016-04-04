@@ -40,19 +40,3 @@ type pathHandler interface {
 	pattern() string
 	parseParams(path string) Params
 }
-
-type middlewareHandler struct {
-	handler Handler
-}
-
-func (m *middlewareHandler) serveHTTP(res ResponseWriter, req *Request) {
-	m.handler.ServeHTTP(res, req)
-}
-
-func (m *middlewareHandler) match(path string) bool {
-	return true
-}
-
-func (m *middlewareHandler) parseParams(path string) Params {
-	return nil
-}
