@@ -5,7 +5,6 @@
 package goserv
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -101,15 +100,13 @@ func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
 }
 
 func (r *Router) Mount(prefix string, router *Router) *Router {
-	path := fmt.Sprintf("%s%s", r.path, prefix)
-
 	var err error
-	router.pathComponents, err = parsePrefixPath(path)
+	router.pathComponents, err = parsePrefixPath(prefix)
 	if err != nil {
 		panic(err)
 	}
 
-	router.path = path
+	router.path = r.path + prefix
 
 	return r.addHandler(router)
 }
