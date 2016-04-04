@@ -38,10 +38,13 @@ func TestRouter(t *testing.T) {
 		h.WriteString(id)
 	}).Router("/cat").GetFunc("/ape", func(res ResponseWriter, req *Request) {
 		h.WriteString("8")
-		res.Write([]byte("Done"))
+		res.Write([]byte("Ape"))
 	}).GetFunc("/error", func(res ResponseWriter, req *Request) {
 		h.WriteString("9")
 		res.SetError(fmt.Errorf("Error in 9"))
+	}).Router("/dog").GetFunc("/squirrel", func(res ResponseWriter, req *Request) {
+		h.WriteString("10")
+		res.Write([]byte("Squirrel"))
 	})
 
 	tests := []struct {
@@ -55,8 +58,9 @@ func TestRouter(t *testing.T) {
 		{http.MethodPost, "/", []string{"1", "2", "4"}, "", fmt.Errorf("Error in 4")},
 		{http.MethodGet, "/dog", []string{"1", "5"}, "Done", nil},
 		{http.MethodGet, "/dog/123456", []string{"1", "123456", "6", "7"}, "123456", nil},
-		{http.MethodGet, "/cat/ape", []string{"1", "8"}, "Done", nil},
-		{http.MethodGet, "/cat/error", []string{"1", "9"}, "", fmt.Errorf("Error in 7")},
+		{http.MethodGet, "/cat/ape", []string{"1", "8"}, "Ape", nil},
+		{http.MethodGet, "/cat/error", []string{"1", "9"}, "", fmt.Errorf("Error in 9")},
+		{http.MethodGet, "/cat/dog/squirrel", []string{"1", "10"}, "Squirrel", nil},
 	}
 
 	for index, test := range tests {
@@ -73,8 +77,12 @@ func TestRouter(t *testing.T) {
 
 		router.ServeHTTP(w, r)
 
-		if test.err != nil && err == nil {
-			t.Errorf("Expected error in ServeHTTP, but there is none (no. %d)", index)
+		if test.err != nil {
+			if err == nil {
+				t.Errorf("Expected error in ServeHTTP, but there is none (no. %d)", index)
+			} else if test.err.Error() != err.Error() {
+				t.Errorf("Wrong error message: %s != %s", err.Error(), test.err.Error())
+			}
 		}
 
 		if test.err == nil && err != nil {
