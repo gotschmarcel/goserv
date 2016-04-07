@@ -55,3 +55,7 @@ func (r *responseWriter) SetError(err error) {
 
 	r.err = err
 }
+
+func newResponseWriter(w http.ResponseWriter) ResponseWriter {
+	return &responseWriter{w: w}
+}

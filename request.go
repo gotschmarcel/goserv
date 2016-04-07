@@ -15,3 +15,7 @@ type Request struct {
 	Params        Params
 	SanitizedPath string
 }
+
+func newRequest(r *http.Request) *Request {
+	return &Request{r, &Context{}, nil, make(Params), sanitizePath(r.URL.Path)}
+}
