@@ -171,7 +171,7 @@ func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
 
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	paramHandlerInvoked := make(map[string]bool)
-	path := req.SanitizedPath[len(r.path):] // Strip own prefix
+	path := req.SanitizedPath()[len(r.path):] // Strip own prefix
 
 	for _, handler := range r.handlers {
 		if !handler.match(path) {

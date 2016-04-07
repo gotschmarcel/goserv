@@ -13,7 +13,11 @@ type Request struct {
 	Context       *Context
 	Locals        Locals
 	Params        Params
-	SanitizedPath string
+	sanitizedPath string
+}
+
+func (r *Request) SanitizedPath() string {
+	return r.sanitizedPath
 }
 
 func newRequest(r *http.Request) *Request {
