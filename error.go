@@ -10,14 +10,13 @@ import (
 	"net/http"
 )
 
-var (
-	errNotFound = errors.New(http.StatusText(http.StatusNotFound))
-)
+var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
+var StdErrorHandler = ErrorHandlerFunc(StdErrorHandlerFunc)
 
-func defaultErrorHandler(res ResponseWriter, req *Request, err error) {
+func StdErrorHandlerFunc(res ResponseWriter, req *Request, err error) {
 	status := http.StatusInternalServerError
 
-	if err == errNotFound {
+	if err == ErrNotFound {
 		status = http.StatusNotFound
 	}
 

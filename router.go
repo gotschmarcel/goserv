@@ -170,7 +170,7 @@ func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
 
 	err := res.Error()
 	if err == nil && !res.Written() {
-		err = errNotFound
+		err = ErrNotFound
 	}
 
 	r.ErrorHandler.ServeHTTP(res, req, err)
@@ -233,7 +233,7 @@ func (r *Router) addHandler(handler pathHandler) *Router {
 
 func NewRouter() *Router {
 	return &Router{
-		ErrorHandler:  ErrorHandlerFunc(defaultErrorHandler),
+		ErrorHandler:  StdErrorHandler,
 		paramHandlers: make(paramHandlerMap),
 	}
 }
