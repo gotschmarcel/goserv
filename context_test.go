@@ -18,6 +18,10 @@ func TestContext(t *testing.T) {
 		t.Error("Expected nil value for 'key'")
 	}
 
+	if c.store != nil {
+		t.Error("Expected the internal store to be nil")
+	}
+
 	c.Set("key", "value")
 
 	// Internal storage created.
