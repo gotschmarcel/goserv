@@ -5,7 +5,7 @@
 package goserv
 
 type Context struct {
-	store storage
+	store map[string]interface{}
 }
 
 func (c *Context) Set(key string, value interface{}) {
@@ -14,8 +14,28 @@ func (c *Context) Set(key string, value interface{}) {
 }
 
 func (c *Context) Get(key string) interface{} {
-	c.assureStorage()
+	if c.store == nil {
+		return nil
+	}
+
 	return c.store[key]
+}
+
+func (c *Context) Delete(key string) {
+	if c.store == nil {
+		return
+	}
+
+	delete(c.store, key)
+}
+
+func (c *Context) Exists(key string) bool {
+	if c.store == nil {
+		return false
+	}
+
+	_, exists := c.store[key]
+	return exists
 }
 
 func (c *Context) assureStorage() {
@@ -23,7 +43,5 @@ func (c *Context) assureStorage() {
 		return
 	}
 
-	c.store = make(storage)
+	c.store = make(map[string]interface{})
 }
-
-type storage map[string]interface{}
