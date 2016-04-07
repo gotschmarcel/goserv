@@ -10,9 +10,15 @@ import (
 	"strings"
 )
 
-func nativeWrapper(handler http.Handler) HandlerFunc {
+func WrapHTTPHandler(handler http.Handler) Handler {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		handler.ServeHTTP(http.ResponseWriter(res), req.Request)
+	})
+}
+
+func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) Handler {
+	return HandlerFunc(func(res ResponseWriter, req *Request) {
+		fn(http.ResponseWriter(res), req.Request)
 	})
 }
 

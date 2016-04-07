@@ -19,7 +19,7 @@ func (r *Route) All(handlers ...Handler) *Route {
 
 func (r *Route) AllNative(handlers ...http.Handler) *Route {
 	for _, handler := range handlers {
-		r.middleware = append(r.middleware, nativeWrapper(handler))
+		r.middleware = append(r.middleware, WrapHTTPHandler(handler))
 	}
 	return r
 }
