@@ -17,13 +17,6 @@ func (r *Route) All(handlers ...Handler) *Route {
 	return r
 }
 
-func (r *Route) AllNative(handlers ...http.Handler) *Route {
-	for _, handler := range handlers {
-		r.middleware = append(r.middleware, WrapHTTPHandler(handler))
-	}
-	return r
-}
-
 func (r *Route) AllFunc(funcs ...func(ResponseWriter, *Request)) *Route {
 	for _, fn := range funcs {
 		r.middleware = append(r.middleware, HandlerFunc(fn))

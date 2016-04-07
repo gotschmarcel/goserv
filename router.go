@@ -28,11 +28,6 @@ func (r *Router) AllFunc(path string, funcs ...func(ResponseWriter, *Request)) *
 	return r
 }
 
-func (r *Router) AllNative(path string, handlers ...http.Handler) *Router {
-	r.NewRoute(path).AllNative(handlers...)
-	return r
-}
-
 func (r *Router) Method(method, path string, handlers ...Handler) *Router {
 	r.NewRoute(path).Method(method, handlers...)
 	return r
@@ -104,11 +99,6 @@ func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string
 
 func (r *Router) Use(handlers ...Handler) *Router {
 	r.NewRoute("*").All(handlers...)
-	return r
-}
-
-func (r *Router) UseNative(handlers ...http.Handler) *Router {
-	r.NewRoute("*").AllNative(handlers...)
 	return r
 }
 
