@@ -19,37 +19,37 @@ type Router struct {
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
-	r.Route(path).All(handlers...)
+	r.NewRoute(path).All(handlers...)
 	return r
 }
 
 func (r *Router) AllFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).AllFunc(funcs...)
+	r.NewRoute(path).AllFunc(funcs...)
 	return r
 }
 
 func (r *Router) AllNative(path string, handlers ...http.Handler) *Router {
-	r.Route(path).AllNative(handlers...)
+	r.NewRoute(path).AllNative(handlers...)
 	return r
 }
 
 func (r *Router) Method(method, path string, handlers ...Handler) *Router {
-	r.Route(path).Method(method, handlers...)
+	r.NewRoute(path).Method(method, handlers...)
 	return r
 }
 
 func (r *Router) MethodFunc(method, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).MethodFunc(method, funcs...)
+	r.NewRoute(path).MethodFunc(method, funcs...)
 	return r
 }
 
 func (r *Router) Methods(methods []string, path string, handlers ...Handler) *Router {
-	r.Route(path).Methods(methods, handlers...)
+	r.NewRoute(path).Methods(methods, handlers...)
 	return r
 }
 
 func (r *Router) MethodsFunc(methods []string, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).MethodsFunc(methods, funcs...)
+	r.NewRoute(path).MethodsFunc(methods, funcs...)
 	return r
 }
 
@@ -103,17 +103,17 @@ func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string
 }
 
 func (r *Router) Use(handlers ...Handler) *Router {
-	r.Route("*").All(handlers...)
+	r.NewRoute("*").All(handlers...)
 	return r
 }
 
 func (r *Router) UseNative(handlers ...http.Handler) *Router {
-	r.Route("*").AllNative(handlers...)
+	r.NewRoute("*").AllNative(handlers...)
 	return r
 }
 
 func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route("*").AllFunc(funcs...)
+	r.NewRoute("*").AllFunc(funcs...)
 	return r
 }
 
@@ -129,7 +129,7 @@ func (r *Router) Mount(prefix string, router *Router) *Router {
 	return r.addHandler(router)
 }
 
-func (r *Router) Router(prefix string) *Router {
+func (r *Router) NewRouter(prefix string) *Router {
 	child := NewRouter()
 	child.ErrorHandler = nil
 	child.StrictSlash = r.StrictSlash
@@ -139,7 +139,7 @@ func (r *Router) Router(prefix string) *Router {
 	return child
 }
 
-func (r *Router) Route(path string) *Route {
+func (r *Router) NewRoute(path string) *Route {
 	route, err := newRoute(path, r.StrictSlash)
 	if err != nil {
 		panic(err)
@@ -152,13 +152,6 @@ func (r *Router) Route(path string) *Route {
 
 func (r *Router) Path() string {
 	return r.path
-}
-
-func (r *Router) ServeHTTP(nativeRes http.ResponseWriter, nativeReq *http.Request) {
-	res := &responseWriter{w: nativeRes}
-	req := &Request{nativeReq, &Context{}, nil, nil, sanitizePath(nativeReq.URL.Path)}
-
-	r.serveHTTP(res, req)
 }
 
 func (r *Router) serveHTTP(res ResponseWriter, req *Request) {
@@ -232,10 +225,7 @@ func (r *Router) addHandler(handler pathHandler) *Router {
 }
 
 func NewRouter() *Router {
-	return &Router{
-		ErrorHandler:  StdErrorHandler,
-		paramHandlers: make(paramHandlerMap),
-	}
+	return &Router{paramHandlers: make(paramHandlerMap)}
 }
 
 type paramHandlerMap map[string][]ParamHandler

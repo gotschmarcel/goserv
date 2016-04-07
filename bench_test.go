@@ -9,50 +9,50 @@ import (
 	"testing"
 )
 
-func BenchmarkRouter(b *testing.B) {
-	router := NewRouter()
-	router.ErrorHandler = nil
+func BenchmarkServer(b *testing.B) {
+	server := NewServer()
+	server.ErrorHandler = nil
 
-	router.GetFunc("/v1/users/:id", func(ResponseWriter, *Request) {})
+	server.GetFunc("/v1/users/:id", func(ResponseWriter, *Request) {})
 
 	req, _ := http.NewRequest(http.MethodGet, "/v1/users/123456", nil)
 	for i := 0; i < b.N; i++ {
-		router.ServeHTTP(nil, req)
+		server.ServeHTTP(nil, req)
 	}
 }
 
-func BenchmarkRouterManyParams(b *testing.B) {
-	router := NewRouter()
-	router.ErrorHandler = nil
+func BenchmarkServerManyParams(b *testing.B) {
+	server := NewServer()
+	server.ErrorHandler = nil
 
-	router.GetFunc("/v1/:p1/:p2/:p3/:p4/:p5", func(ResponseWriter, *Request) {})
+	server.GetFunc("/v1/:p1/:p2/:p3/:p4/:p5", func(ResponseWriter, *Request) {})
 
 	req, _ := http.NewRequest(http.MethodGet, "/v1/1/2/3/4/5", nil)
 	for i := 0; i < b.N; i++ {
-		router.ServeHTTP(nil, req)
+		server.ServeHTTP(nil, req)
 	}
 }
 
 func BenchmarkNestedRouter(b *testing.B) {
 	handler := func(ResponseWriter, *Request) {}
-	r1 := NewRouter()
-	r1.ErrorHandler = nil
-	r1.Router("/v2").Router("/v3").Router("/v4").Router("/v5").GetFunc("/1", handler)
+	s := NewServer()
+	s.ErrorHandler = nil
+	s.NewRouter("/v2").NewRouter("/v3").NewRouter("/v4").NewRouter("/v5").GetFunc("/1", handler)
 
 	req, _ := http.NewRequest(http.MethodGet, "/v2/v3/v4/v5/1", nil)
 	for i := 0; i < b.N; i++ {
-		r1.ServeHTTP(nil, req)
+		s.ServeHTTP(nil, req)
 	}
 }
 
 func BenchmarkNestedRouterWithParams(b *testing.B) {
 	handler := func(ResponseWriter, *Request) {}
-	r1 := NewRouter()
-	r1.ErrorHandler = nil
-	r1.Router("/v2").Router("/v3").Router("/v4").Router("/v5").GetFunc("/:id", handler)
+	s := NewServer()
+	s.ErrorHandler = nil
+	s.NewRouter("/v2").NewRouter("/v3").NewRouter("/v4").NewRouter("/v5").GetFunc("/:id", handler)
 
 	req, _ := http.NewRequest(http.MethodGet, "/v2/v3/v4/v5/1", nil)
 	for i := 0; i < b.N; i++ {
-		r1.ServeHTTP(nil, req)
+		s.ServeHTTP(nil, req)
 	}
 }

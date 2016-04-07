@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/gotschmarcel/goserv"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -17,7 +16,7 @@ func accessLogger(res goserv.ResponseWriter, req *goserv.Request) {
 }
 
 func ExampleSimpleServer() {
-	server := goserv.NewRouter()
+	server := goserv.NewServer()
 
 	server.UseFunc(accessLogger)
 	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
@@ -26,7 +25,7 @@ func ExampleSimpleServer() {
 
 	// Everything else is a 404 error.
 
-	log.Fatalln(http.ListenAndServe(":8080", server))
+	log.Fatalln(server.Listen(":8080", nil))
 }
 
 type MyController struct {
@@ -55,14 +54,14 @@ func (m *MyController) paramUserID(res goserv.ResponseWriter, req *goserv.Reques
 
 func ExampleAPISubrouter() {
 	controller := &MyController{"MyApp", log.New(os.Stderr, "[main] ", log.LstdFlags)}
-	server := goserv.NewRouter()
+	server := goserv.NewServer()
 
 	server.UseFunc(controller.logName)
-	apiRouter := server.Router("/api")
+	apiRouter := server.NewRouter("/api")
 
 	apiRouter.GetFunc("/users", controller.getUsers)
 	apiRouter.GetFunc("/users/:user_id", controller.getUser)
 	apiRouter.ParamFunc("user_id", controller.paramUserID)
 
-	log.Fatalln(http.ListenAndServe(":8080", server))
+	log.Fatalln(server.Listen(":8080", nil))
 }

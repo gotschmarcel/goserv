@@ -63,7 +63,7 @@ func TestRouter(t *testing.T) {
 	router.Methods([]string{http.MethodGet, http.MethodDelete}, "/multi", h.WriteHandler("multi-handler"))
 
 	// Register route
-	router.Route("/route").Get(h.WriteHandler("route-handler"))
+	router.NewRoute("/route").Get(h.WriteHandler("route-handler"))
 
 	// Register parameter routes
 	router.Get("/param1/:value1/param2/:value2", h.Handler("param-route1"))
@@ -72,8 +72,8 @@ func TestRouter(t *testing.T) {
 	router.Param("value2", h.ParamHandler())
 
 	// Register sub routers
-	sr1 := router.Router("/srouter1").Get("/get", h.WriteHandler("srouter1-handler"))
-	sr1.Router("/srouter2").Get("/get", h.WriteHandler("srouter2-handler")).Get("/error", h.HandlerWithError("srouter2-error"))
+	sr1 := router.NewRouter("/srouter1").Get("/get", h.WriteHandler("srouter1-handler"))
+	sr1.NewRouter("/srouter2").Get("/get", h.WriteHandler("srouter2-handler")).Get("/error", h.HandlerWithError("srouter2-error"))
 
 	tests := []struct {
 		method string
@@ -83,11 +83,11 @@ func TestRouter(t *testing.T) {
 		err    error
 	}{
 		{http.MethodGet, "/", []string{"middleware", "all-handler", "get-handler"}, "get-handler", nil},
-		{http.MethodPost, "/", []string{"middleware", "all-handler"}, "", errNotFound},
+		{http.MethodPost, "/", []string{"middleware", "all-handler"}, "", ErrNotFound},
 
 		{http.MethodGet, "/multi", []string{"middleware", "multi-handler"}, "multi-handler", nil},
 		{http.MethodDelete, "/multi", []string{"middleware", "multi-handler"}, "multi-handler", nil},
-		{http.MethodPost, "/multi", []string{"middleware"}, "", errNotFound},
+		{http.MethodPost, "/multi", []string{"middleware"}, "", ErrNotFound},
 
 		{http.MethodGet, "/route", []string{"middleware", "route-handler"}, "route-handler", nil},
 
@@ -110,7 +110,7 @@ func TestRouter(t *testing.T) {
 			err = e
 		})
 
-		router.ServeHTTP(w, r)
+		router.serveHTTP(newResponseWriter(w), newRequest(r))
 
 		if test.err != nil {
 			if err == nil {
