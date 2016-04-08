@@ -107,6 +107,18 @@ func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
 	return r
 }
 
+func (r *Router) Prefix(prefix string, handlers ...Handler) *Router {
+	path := NewPrefixPath(prefix, NewRoute())
+	path.handler.(*Route).All(handlers...)
+	return r.addPath(path)
+}
+
+func (r *Router) PrefixFunc(prefix string, funcs ...func(ResponseWriter, *Request)) *Router {
+	path := NewPrefixPath(prefix, NewRoute())
+	path.handler.(*Route).AllFunc(funcs...)
+	return r.addPath(path)
+}
+
 func (r *Router) NewRouter(prefix string) *Router {
 	child := NewRouter()
 	child.StrictSlash = r.StrictSlash
