@@ -9,3 +9,5 @@ type Locals interface{}
 type Params map[string]string
 
 func (p Params) Get(key string) string { return p[key] }
+
+type empty struct{}

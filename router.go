@@ -12,9 +12,10 @@ type Router struct {
 	ErrorHandler ErrorHandler
 	StrictSlash  bool
 
-	path          string
-	paramHandlers paramHandlerMap
-	paths         []*Path
+	path                      string
+	paramHandlers             paramHandlerMap
+	paramHandlerInvokedMemory map[*Request]emptyNameMap
+	paths                     []*Path
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
@@ -142,8 +143,9 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 }
 
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
-	paramHandlerInvoked := make(map[string]bool)
 	pathString := req.SanitizedPath()[len(r.path):] // Strip own prefix
+
+	defer r.deleteParamHandlerInvokedMemory(req)
 
 	for _, path := range r.paths {
 		if !path.Match(pathString) {
@@ -151,7 +153,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 		}
 
 		path.FillParams(req)
-		if !r.handleParams(res, req, paramHandlerInvoked) {
+		if !r.handleParams(res, req) {
 			return
 		}
 
@@ -167,9 +169,11 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	}
 }
 
-func (r *Router) handleParams(res ResponseWriter, req *Request, memory map[string]bool) bool {
+func (r *Router) handleParams(res ResponseWriter, req *Request) bool {
+	invoked := r.getParamHandlerInvokedMemory(req)
+
 	for name, value := range req.Params {
-		if memory[name] {
+		if _, ok := invoked[name]; ok {
 			continue
 		}
 
@@ -185,10 +189,25 @@ func (r *Router) handleParams(res ResponseWriter, req *Request, memory map[strin
 			}
 		}
 
-		memory[name] = true
+		invoked[name] = empty{}
 	}
 
 	return true
+}
+
+func (r *Router) getParamHandlerInvokedMemory(req *Request) emptyNameMap {
+	if memory, ok := r.paramHandlerInvokedMemory[req]; ok {
+		return memory
+	}
+
+	memory := make(emptyNameMap)
+	r.paramHandlerInvokedMemory[req] = memory
+
+	return memory
+}
+
+func (r *Router) deleteParamHandlerInvokedMemory(req *Request) {
+	delete(r.paramHandlerInvokedMemory, req)
 }
 
 func (r *Router) addPath(path *Path) *Router {
@@ -197,7 +216,11 @@ func (r *Router) addPath(path *Path) *Router {
 }
 
 func NewRouter() *Router {
-	return &Router{paramHandlers: make(paramHandlerMap)}
+	return &Router{
+		paramHandlers:             make(paramHandlerMap),
+		paramHandlerInvokedMemory: make(map[*Request]emptyNameMap),
+	}
 }
 
 type paramHandlerMap map[string][]ParamHandler
+type emptyNameMap map[string]empty
