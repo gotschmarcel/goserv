@@ -22,7 +22,7 @@ func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) Handle
 	})
 }
 
-func sanitizePath(p string) string {
+func SanitizePath(p string) string {
 	if len(p) == 0 {
 		return "/"
 	}
