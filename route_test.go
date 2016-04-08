@@ -16,10 +16,7 @@ func TestRouteHandlerChain(t *testing.T) {
 	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, nil, "/"}
 	history := &historyWriter{}
 
-	route, err := newRoute("/", false)
-	if err != nil {
-		t.Fatalf("Could not create route")
-	}
+	route := NewRoute()
 
 	route.AllFunc(func(ResponseWriter, *Request) {
 		history.WriteString("1")
@@ -42,7 +39,7 @@ func TestRouteHandlerChain(t *testing.T) {
 		history.WriteString("5")
 	})
 
-	route.serveHTTP(res, req)
+	route.ServeHTTP(res, req)
 	if err := res.Error(); err != nil {
 		t.Errorf("Serve error: %v", err)
 	}

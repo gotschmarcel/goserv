@@ -16,98 +16,80 @@ var (
 	maybeSlashSuffixMatcher = regexp.MustCompile("/?$")
 )
 
-type pathComponents struct {
+const (
+	paramValueCapture = "([^/]+)"
+	nonStrictSlash    = "$1/?"
+)
+
+type Path struct {
 	matcher *regexp.Regexp
 	params  []string
+	handler Handler
 }
 
-func (p *pathComponents) match(path string) bool {
+func (p *Path) Match(path string) bool {
 	return p.matcher.MatchString(path)
 }
 
-func (p *pathComponents) parseParams(path string) Params {
+func (p *Path) FillParams(r *Request) {
 	if len(p.params) == 0 {
-		return nil
+		return
 	}
 
-	matches := p.matcher.FindAllStringSubmatch(path, -1)
+	matches := p.matcher.FindAllStringSubmatch(r.SanitizedPath(), -1)
 	if len(matches) == 0 {
-		return nil
+		return
 	}
 
 	// Iterate group matches only
-	params := Params{}
 	for index, value := range matches[0][1:] {
 		name := p.params[index]
-		params[name] = value
+		r.Params[name] = value
 	}
-
-	return params
 }
 
-func (p *pathComponents) pattern() string {
-	return p.matcher.String()
+func (p *Path) ServeHTTP(res ResponseWriter, req *Request) {
+	p.handler.ServeHTTP(res, req)
 }
 
-func parsePath(path string, strictSlash bool) (*pathComponents, error) {
-	var err error
-	c := &pathComponents{}
-
-	c.matcher, err = pathStringToRegexp(path, strictSlash)
-	if err != nil {
-		return nil, err
-	}
-
-	c.params = pathStringParameters(path)
-
-	return c, nil
+func NewPrefixPath(pattern string, handler Handler) *Path {
+	return newPath(pattern, true, prefixPattern, handler)
 }
 
-func pathStringToRegexp(path string, strictSlash bool) (*regexp.Regexp, error) {
-	// TODO: Validate path?
-	pattern := paramMatcher.ReplaceAllLiteralString(path, "([^/]+)")
+func NewFullPath(pattern string, strict bool, handler Handler) *Path {
+	return newPath(pattern, strict, fullPattern, handler)
+}
+
+func newPath(pattern string, strict bool, wrapper func(string) string, handler Handler) *Path {
+	p := &Path{handler: handler}
+
+	pattern = replaceAndExtractParams(pattern, &p.params)
 	pattern = wildcardsToRegexp(pattern)
 
-	if strictSlash == false {
-		pattern = maybeSlashSuffixMatcher.ReplaceAllString(pattern, "$1/?")
+	if strict == false {
+		pattern = maybeSlashSuffixMatcher.ReplaceAllString(pattern, nonStrictSlash)
 	}
 
-	pattern = wholePattern(pattern)
+	pattern = wrapper(pattern)
 
-	return regexp.Compile(pattern)
+	p.matcher = regexp.MustCompile(pattern)
+
+	return p
 }
 
-func pathStringParameters(path string) []string {
-	var params []string
-
-	for _, match := range paramMatcher.FindAllStringSubmatch(path, -1) {
-		// Append param name without leading ':'
-		params = append(params, match[1])
-	}
-
-	return params
-}
-
-func parsePrefixPath(prefix string) (*pathComponents, error) {
-	var err error
-	c := &pathComponents{}
-
-	pattern := wildcardsToRegexp(prefix)
-	pattern = prefixPattern(pattern)
-
-	c.matcher, err = regexp.Compile(pattern)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
+func replaceAndExtractParams(pattern string, params *[]string) string {
+	return paramMatcher.ReplaceAllStringFunc(pattern, func(m string) string {
+		name := m[1:] // Remove leading ':'
+		*params = append(*params, name)
+		return paramValueCapture
+	})
 }
 
 func wildcardsToRegexp(path string) string {
 	return strings.Replace(path, "*", ".*", -1)
 }
 
-func wholePattern(pattern string) string {
+func fullPattern(pattern string) string {
 	return fmt.Sprintf("^%s$", pattern)
 }
 

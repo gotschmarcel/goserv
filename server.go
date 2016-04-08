@@ -28,7 +28,7 @@ func (s *Server) Listen(addr string, tls *TLS) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.Router.serveHTTP(newResponseWriter(w), newRequest(r))
+	s.Router.ServeHTTP(newResponseWriter(w), newRequest(r))
 }
 
 func NewServer() *Server {

@@ -33,10 +33,3 @@ type ParamHandlerFunc func(ResponseWriter, *Request, string)
 func (p ParamHandlerFunc) ServeHTTP(res ResponseWriter, req *Request, value string) {
 	p(res, req, value)
 }
-
-type pathHandler interface {
-	serveHTTP(ResponseWriter, *Request)
-	match(path string) bool
-	pattern() string
-	parseParams(path string) Params
-}

@@ -4,7 +4,10 @@
 
 package goserv
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func stringInSlice(v string, slice []string) bool {
 	for _, s := range slice {
@@ -40,30 +43,29 @@ func TestParsePathString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		c, err := parsePath(test.path, test.strict)
-		if err != nil {
-			t.Errorf("Error with path '%s', %v", test.path, err)
-			continue
-		}
+		p := NewFullPath(test.path, test.strict, nil)
 
-		if !c.match(test.p) {
+		or, _ := http.NewRequest("", test.p, nil)
+		r := newRequest(or)
+
+		if !p.Match(test.p) {
 			t.Errorf("Path did not match: %s != %s", test.p, test.path)
 			continue
 		}
 
-		if c.match(test.n) {
+		if p.Match(test.n) {
 			t.Errorf("Path did match: %s == %s", test.n, test.path)
 			continue
 		}
 
-		params := c.parseParams(test.p)
+		p.FillParams(r)
 		for name, value := range test.params {
-			if !stringInSlice(name, c.params) {
-				t.Errorf("Missing param name: %s, %v", name, c.params)
+			if !stringInSlice(name, p.params) {
+				t.Errorf("Missing param name: %s, %v", name, p.params)
 				continue
 			}
 
-			v, ok := params[name]
+			v, ok := r.Params[name]
 			if !ok {
 				t.Errorf("Param not extracted: %s", name)
 				continue
