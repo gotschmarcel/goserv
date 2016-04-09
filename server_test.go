@@ -8,8 +8,43 @@ import (
 	"html/template"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
+
+func TestRecovery(t *testing.T) {
+	server := NewServer()
+	server.PanicRecovery = true
+	expectedErr := "Panic: no renderer set"
+
+	server.GetFunc("/", func(res ResponseWriter, req *Request) {
+		res.Render("none", nil)
+	})
+
+	var err error
+	server.ErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, e error) {
+		err = e
+	})
+
+	r, _ := http.NewRequest(http.MethodGet, "/", nil)
+	w := httptest.NewRecorder()
+
+	server.ServeHTTP(w, r)
+
+	if err == nil {
+		t.Fatal("Error expected")
+	}
+
+	errMsg := err.Error()
+	if !strings.HasPrefix(errMsg, "Panic") {
+		t.Error("Expected error to have prefix 'Panic'")
+	}
+
+	if errMsg != expectedErr {
+		t.Errorf("Expected '%s', not '%s'", expectedErr, errMsg)
+	}
+
+}
 
 func TestStatic(t *testing.T) {
 	tests := []struct {
