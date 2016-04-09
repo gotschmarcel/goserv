@@ -161,7 +161,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 		}
 
 		route.FillParams(req)
-		if !r.handleParams(res, req) {
+		if !r.handleParams(res, req, route.params) {
 			return
 		}
 
@@ -177,13 +177,16 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	}
 }
 
-func (r *Router) handleParams(res ResponseWriter, req *Request) bool {
+func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string) bool {
 	invoked := r.getParamHandlerInvokedMemory(req)
 
-	for name, value := range req.Params {
+	// Call param handlers in the same order in which the parameters appear in the path.
+	for _, name := range orderedParams {
 		if _, ok := invoked[name]; ok {
 			continue
 		}
+
+		value := req.Params.Get(name)
 
 		for _, paramHandler := range r.paramHandlers[name] {
 			paramHandler.ServeHTTP(res, req, value)
