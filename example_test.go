@@ -25,7 +25,7 @@ func ExampleSimpleServer() {
 
 	// Everything else is a 404 error.
 
-	log.Fatalln(server.Listen(":8080", nil))
+	log.Fatalln(server.Listen(":8080"))
 }
 
 type MyController struct {
@@ -63,5 +63,5 @@ func ExampleAPISubrouter() {
 	apiRouter.GetFunc("/users/:user_id", controller.getUser)
 	apiRouter.ParamFunc("user_id", controller.paramUserID)
 
-	log.Fatalln(server.Listen(":8080", nil))
+	log.Fatalln(server.Listen(":8080"))
 }

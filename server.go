@@ -18,13 +18,13 @@ type Server struct {
 	TLS  *TLS
 }
 
-func (s *Server) Listen(addr string, tls *TLS) error {
-	if tls != nil {
-		s.TLS = tls
-		return http.ListenAndServeTLS(addr, tls.CertFile, tls.KeyFile, s)
-	}
-
+func (s *Server) Listen(addr string) error {
 	return http.ListenAndServe(addr, s)
+}
+
+func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
+	s.TLS = &TLS{certFile, keyFile}
+	return http.ListenAndServeTLS(addr, certFile, keyFile, s)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
