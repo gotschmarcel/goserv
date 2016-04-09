@@ -64,7 +64,15 @@ func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 }
 
 func NewServer() *Server {
-	s := &Server{NewRouter(), "", nil, "", nil, false}
+	s := &Server{
+		Router:        NewRouter(),
+		Addr:          "",
+		TLS:           nil,
+		ViewRoot:      "",
+		Renderer:      nil,
+		PanicRecovery: false,
+	}
+
 	s.ErrorHandler = StdErrorHandler
 
 	return s
