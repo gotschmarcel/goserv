@@ -31,6 +31,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Router.ServeHTTP(newResponseWriter(w), newRequest(r))
 }
 
+func (s *Server) Static(prefix string, dir http.Dir) {
+	s.Prefix(prefix, WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
+}
+
 func NewServer() *Server {
 	s := &Server{NewRouter(), "", nil}
 	s.ErrorHandler = StdErrorHandler
