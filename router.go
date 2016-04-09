@@ -142,13 +142,13 @@ func (r *Router) Path() string {
 func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 	r.invokeHandlers(res, req)
 
-	if r.ErrorHandler == nil {
+	if res.Written() || r.ErrorHandler == nil {
 		return
 	}
 
-	err := res.Error()
-	if err == nil && !res.Written() {
-		err = ErrNotFound
+	err := ErrNotFound
+	if e := res.Error(); e != nil {
+		err = e
 	}
 
 	r.ErrorHandler.ServeHTTP(res, req, err)
