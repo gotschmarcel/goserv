@@ -4,10 +4,7 @@
 
 package goserv
 
-import (
-	"net/http"
-	"testing"
-)
+import "testing"
 
 func stringInSlice(v string, slice []string) bool {
 	for _, s := range slice {
@@ -19,11 +16,12 @@ func stringInSlice(v string, slice []string) bool {
 	return false
 }
 
-func TestParsePathString(t *testing.T) {
+func TestPathComponents(t *testing.T) {
 	tests := []struct {
 		path, p, n string
-		params     Params
+		params     []string
 		strict     bool
+		prefix     bool
 	}{
 		// Strict vs non-strict
 		{path: "/abc", p: "/abc"},
@@ -36,43 +34,32 @@ func TestParsePathString(t *testing.T) {
 		{path: "/*", p: "/"},
 
 		// Params
-		{path: "/:id", p: "/tab", n: "/", params: Params{"id": "tab"}},
-		{path: "/:i_d", p: "/tab", n: "/", params: Params{"i_d": "tab"}},
-		{path: "/:i-d/abc", p: "/tab/abc", n: "/tab/adc", params: Params{"i-d": "tab"}},
-		{path: "/:id1/abc/:id2", p: "/tab/abc/akad", n: "/tab/adc/akad", params: Params{"id1": "tab", "id2": "akad"}},
+		{path: "/:id", p: "/tab", n: "/", params: []string{"id"}},
+		{path: "/:i_d", p: "/tab", n: "/", params: []string{"i_d"}},
+		{path: "/:i-d/abc", p: "/tab/abc", n: "/tab/adc", params: []string{"i-d"}},
+		{path: "/:id1/abc/:id2", p: "/tab/abc/akad", n: "/tab/adc/akad", params: []string{"id1", "id2"}},
+
+		// Prefix
+		{path: "/abc", p: "/abcdef", prefix: true},
+		{path: "/abc", p: "/abc", n: "/abcdef", prefix: false},
 	}
 
 	for _, test := range tests {
-		p := NewFullPath(test.path, test.strict, nil)
+		matcher, params := pathComponents(test.path, test.strict, test.prefix)
 
-		or, _ := http.NewRequest("", test.p, nil)
-		r := newRequest(or)
-
-		if !p.Match(test.p) {
+		if !matcher.MatchString(test.p) {
 			t.Errorf("Path did not match: %s != %s", test.p, test.path)
 			continue
 		}
 
-		if p.Match(test.n) {
+		if matcher.MatchString(test.n) {
 			t.Errorf("Path did match: %s == %s", test.n, test.path)
 			continue
 		}
 
-		p.FillParams(r)
-		for name, value := range test.params {
-			if !stringInSlice(name, p.params) {
-				t.Errorf("Missing param name: %s, %v", name, p.params)
-				continue
-			}
-
-			v, ok := r.Params[name]
-			if !ok {
-				t.Errorf("Param not extracted: %s", name)
-				continue
-			}
-
-			if v != value {
-				t.Errorf("Wrong param value: %s != %s", v, value)
+		for _, name := range test.params {
+			if !stringInSlice(name, params) {
+				t.Errorf("Missing param name: %s, %v", name, params)
 				continue
 			}
 		}

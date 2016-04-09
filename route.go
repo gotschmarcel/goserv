@@ -4,11 +4,16 @@
 
 package goserv
 
-import "net/http"
+import (
+	"net/http"
+	"regexp"
+)
 
 type Route struct {
 	middleware []Handler
 	methods    map[string][]Handler
+	matcher    *regexp.Regexp
+	params     []string
 }
 
 func (r *Route) All(handlers ...Handler) *Route {
@@ -90,6 +95,10 @@ func (r *Route) PatchFunc(funcs ...func(ResponseWriter, *Request)) *Route {
 }
 
 func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
+	if r.ContainsParams() && len(req.Params) == 0 {
+		r.FillParams(req)
+	}
+
 	for _, handler := range append(r.middleware, r.methods[req.Method]...) {
 		handler.ServeHTTP(res, req)
 
@@ -103,10 +112,41 @@ func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
 	}
 }
 
+func (r *Route) Match(path string) bool {
+	return r.matcher.MatchString(path)
+}
+
+func (r *Route) FillParams(req *Request) {
+	if !r.ContainsParams() {
+		return
+	}
+
+	matches := r.matcher.FindAllStringSubmatch(req.SanitizedPath(), -1)
+	if len(matches) == 0 {
+		return
+	}
+
+	// Iterate group matches only
+	for index, value := range matches[0][1:] {
+		name := r.params[index]
+		req.Params[name] = value
+	}
+}
+
+func (r *Route) ContainsParams() bool {
+	return len(r.params) > 0
+}
+
 func (r *Route) addMethodHandlers(method string, handlers ...Handler) {
 	r.methods[method] = append(r.methods[method], handlers...)
 }
 
-func NewRoute() *Route {
-	return &Route{methods: make(map[string][]Handler)}
+func newRoute(pattern string, strict, prefixOnly bool) *Route {
+	matcher, params := pathComponents(pattern, strict, prefixOnly)
+
+	return &Route{
+		methods: make(map[string][]Handler),
+		matcher: matcher,
+		params:  params,
+	}
 }

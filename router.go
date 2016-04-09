@@ -15,7 +15,7 @@ type Router struct {
 	path                      string
 	paramHandlers             paramHandlerMap
 	paramHandlerInvokedMemory map[*Request]emptyNameMap
-	paths                     []*Path
+	routes                    []*Route
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
@@ -108,31 +108,27 @@ func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
 }
 
 func (r *Router) Prefix(prefix string, handlers ...Handler) *Router {
-	path := NewPrefixPath(prefix, NewRoute())
-	path.handler.(*Route).All(handlers...)
-	return r.addPath(path)
+	return r.addRoute(newRoute(prefix, r.StrictSlash, true).All(handlers...))
 }
 
 func (r *Router) PrefixFunc(prefix string, funcs ...func(ResponseWriter, *Request)) *Router {
-	path := NewPrefixPath(prefix, NewRoute())
-	path.handler.(*Route).AllFunc(funcs...)
-	return r.addPath(path)
+	return r.addRoute(newRoute(prefix, r.StrictSlash, true).AllFunc(funcs...))
 }
 
 func (r *Router) NewRouter(prefix string) *Router {
-	child := NewRouter()
-	child.StrictSlash = r.StrictSlash
-	child.path = r.path + prefix
+	router := NewRouter()
+	router.StrictSlash = r.StrictSlash
+	router.path = r.path + prefix
 
-	r.addPath(NewPrefixPath(prefix, child))
+	r.addRoute(newRoute(prefix, r.StrictSlash, true).All(router))
 
-	return child
+	return router
 }
 
 func (r *Router) NewRoute(pattern string) *Route {
-	path := NewFullPath(pattern, r.StrictSlash, NewRoute())
-	r.addPath(path)
-	return path.handler.(*Route)
+	route := newRoute(pattern, r.StrictSlash, false)
+	r.addRoute(route)
+	return route
 }
 
 func (r *Router) Path() string {
@@ -155,21 +151,21 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 }
 
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
-	pathString := req.SanitizedPath()[len(r.path):] // Strip own prefix
+	path := req.SanitizedPath()[len(r.path):] // Strip own prefix
 
 	defer r.deleteParamHandlerInvokedMemory(req)
 
-	for _, path := range r.paths {
-		if !path.Match(pathString) {
+	for _, route := range r.routes {
+		if !route.Match(path) {
 			continue
 		}
 
-		path.FillParams(req)
+		route.FillParams(req)
 		if !r.handleParams(res, req) {
 			return
 		}
 
-		path.ServeHTTP(res, req)
+		route.ServeHTTP(res, req)
 
 		if res.Error() != nil {
 			return
@@ -222,8 +218,8 @@ func (r *Router) deleteParamHandlerInvokedMemory(req *Request) {
 	delete(r.paramHandlerInvokedMemory, req)
 }
 
-func (r *Router) addPath(path *Path) *Router {
-	r.paths = append(r.paths, path)
+func (r *Router) addRoute(route *Route) *Router {
+	r.routes = append(r.routes, route)
 	return r
 }
 

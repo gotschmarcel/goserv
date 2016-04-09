@@ -16,7 +16,7 @@ func TestRouteHandlerChain(t *testing.T) {
 	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, nil, "/"}
 	history := &historyWriter{}
 
-	route := NewRoute()
+	route := newRoute("", false, false)
 
 	route.AllFunc(func(ResponseWriter, *Request) {
 		history.WriteString("1")
@@ -60,5 +60,26 @@ func TestRouteHandlerChain(t *testing.T) {
 
 	if w.Body.String() != "Done" {
 		t.Errorf("Wrong body content: %s != %s", w.Body.String(), "Done")
+	}
+}
+
+func TestRouteParams(t *testing.T) {
+	route := newRoute("/:p1/:p2", false, false)
+	r, _ := http.NewRequest("", "/1234/5678", nil)
+	req := newRequest(r)
+
+	route.FillParams(req)
+
+	expected := Params{"p1": "1234", "p2": "5678"}
+	for name, value := range expected {
+		v, ok := req.Params[name]
+
+		if !ok {
+			t.Errorf("Missing parameter value for '%s'", name)
+		}
+
+		if v != value {
+			t.Errorf("Wrong parameter value for '%s', %s != %s", name, v, value)
+		}
 	}
 }
