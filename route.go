@@ -137,6 +137,10 @@ func (r *Route) ContainsParams() bool {
 	return len(r.params) > 0
 }
 
+func (r *Route) Params() []string {
+	return append([]string{}, r.params...) // return a copy
+}
+
 func (r *Route) addMethodHandlers(method string, handlers ...Handler) {
 	r.methods[method] = append(r.methods[method], handlers...)
 }
