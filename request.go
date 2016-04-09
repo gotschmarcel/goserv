@@ -21,5 +21,5 @@ func (r *Request) SanitizedPath() string {
 }
 
 func newRequest(r *http.Request) *Request {
-	return &Request{r, &Context{}, nil, make(Params), SanitizePath(r.URL.Path)}
+	return &Request{r, newContext(), nil, make(Params), SanitizePath(r.URL.Path)}
 }

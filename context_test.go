@@ -7,9 +7,8 @@ package goserv
 import "testing"
 
 func TestContext(t *testing.T) {
-	c := Context{}
+	c := newContext()
 
-	// Internal storage still nil.
 	if c.Exists("key") {
 		t.Error("The key 'key' should not exist in context")
 	}
@@ -18,13 +17,8 @@ func TestContext(t *testing.T) {
 		t.Error("Expected nil value for 'key'")
 	}
 
-	if c.store != nil {
-		t.Error("Expected the internal store to be nil")
-	}
-
 	c.Set("key", "value")
 
-	// Internal storage created.
 	if !c.Exists("key") {
 		t.Error("Expected 'key' to exist")
 	}
