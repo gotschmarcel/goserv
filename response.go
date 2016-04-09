@@ -14,10 +14,12 @@ type ResponseWriter interface {
 	Status() int
 	Error() error
 	SetError(error)
+	Render(templateName string, locals interface{})
 }
 
 type responseWriter struct {
 	w      http.ResponseWriter
+	s      *Server
 	status int
 	err    error
 }
@@ -56,6 +58,12 @@ func (r *responseWriter) SetError(err error) {
 	r.err = err
 }
 
-func newResponseWriter(w http.ResponseWriter) ResponseWriter {
-	return &responseWriter{w: w}
+func (r *responseWriter) Render(name string, locals interface{}) {
+	if err := r.s.renderView(r, name, locals); err != nil {
+		r.SetError(err)
+	}
+}
+
+func newResponseWriter(w http.ResponseWriter, server *Server) ResponseWriter {
+	return &responseWriter{w: w, s: server}
 }

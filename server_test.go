@@ -5,6 +5,7 @@
 package goserv
 
 import (
+	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -44,5 +45,33 @@ func TestStatic(t *testing.T) {
 		if test.code == http.StatusOK && w.Body.Len() == 0 {
 			t.Errorf("Expected non-empty body (test no. %d)", idx)
 		}
+	}
+}
+
+func TestRenderer(t *testing.T) {
+	server := NewServer()
+	locals := &struct{ Title string }{"MyTitle"}
+
+	// Setup renderer with initial template cache
+	server.ViewRoot = "/views"
+	server.Renderer = NewStdRenderer(".tpl", true)
+	server.Renderer.(*stdRenderer).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
+
+	// Setup route
+	server.GetFunc("/myfile", func(res ResponseWriter, req *Request) {
+		res.Render("my", locals)
+	})
+
+	r, _ := http.NewRequest(http.MethodGet, "/myfile", nil)
+	w := httptest.NewRecorder()
+
+	server.ServeHTTP(w, r)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status OK (200), not %s (%d)", http.StatusText(w.Code), w.Code)
+	}
+
+	if content := w.Body.String(); content != "MyTitle" {
+		t.Errorf("Expected content to be 'MyTitle' not '%s'", content)
 	}
 }

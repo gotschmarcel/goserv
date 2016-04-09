@@ -5,7 +5,9 @@
 package goserv
 
 import (
+	"io"
 	"net/http"
+	"path"
 )
 
 type TLS struct {
@@ -14,8 +16,10 @@ type TLS struct {
 
 type Server struct {
 	*Router
-	Addr string
-	TLS  *TLS
+	Addr     string
+	TLS      *TLS
+	ViewRoot string
+	Renderer Renderer
 }
 
 func (s *Server) Listen(addr string) error {
@@ -28,15 +32,24 @@ func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.Router.ServeHTTP(newResponseWriter(w), newRequest(r))
+	s.Router.ServeHTTP(newResponseWriter(w, s), newRequest(r))
 }
 
 func (s *Server) Static(prefix string, dir http.Dir) {
 	s.Prefix(prefix, WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
 }
 
+func (s *Server) renderView(w io.Writer, name string, locals interface{}) error {
+	if s.Renderer == nil {
+		panic("no renderer set")
+	}
+
+	filePath := path.Join(s.ViewRoot, name) + s.Renderer.Ext()
+	return s.Renderer.RenderAndWrite(w, filePath, locals)
+}
+
 func NewServer() *Server {
-	s := &Server{NewRouter(), "", nil}
+	s := &Server{NewRouter(), "", nil, "", nil}
 	s.ErrorHandler = StdErrorHandler
 
 	return s
