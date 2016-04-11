@@ -15,7 +15,7 @@ type ResponseWriter interface {
 	Status() int
 	Error() error
 	SetError(error)
-	Render(templateName string, locals interface{})
+	Render(string, interface{})
 	JSON(interface{})
 }
 
