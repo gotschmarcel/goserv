@@ -29,7 +29,10 @@ func (r *responseWriter) Header() http.Header {
 }
 
 func (r *responseWriter) Write(b []byte) (int, error) {
-	r.status = http.StatusOK
+	if !r.Written() {
+		r.WriteHeader(http.StatusOK)
+	}
+
 	return r.w.Write(b)
 }
 
