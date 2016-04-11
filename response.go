@@ -5,6 +5,7 @@
 package goserv
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -15,6 +16,7 @@ type ResponseWriter interface {
 	Error() error
 	SetError(error)
 	Render(templateName string, locals interface{})
+	JSON(interface{})
 }
 
 type responseWriter struct {
@@ -63,6 +65,14 @@ func (r *responseWriter) SetError(err error) {
 
 func (r *responseWriter) Render(name string, locals interface{}) {
 	if err := r.s.renderView(r, name, locals); err != nil {
+		r.SetError(err)
+	}
+}
+
+func (r *responseWriter) JSON(v interface{}) {
+	enc := json.NewEncoder(r)
+
+	if err := enc.Encode(v); err != nil {
 		r.SetError(err)
 	}
 }
