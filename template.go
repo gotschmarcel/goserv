@@ -11,19 +11,19 @@ import (
 	"sync"
 )
 
-type Renderer interface {
+type TemplateEngine interface {
 	RenderAndWrite(w io.Writer, filePath string, locals interface{}) error
 	Ext() string
 }
 
-type stdRenderer struct {
+type stdTemplateEngine struct {
 	ext            string
 	cacheTemplates bool
 	tpl            *template.Template
 	tplMutex       sync.Mutex
 }
 
-func (s *stdRenderer) RenderAndWrite(w io.Writer, filePath string, locals interface{}) error {
+func (s *stdTemplateEngine) RenderAndWrite(w io.Writer, filePath string, locals interface{}) error {
 	tpl, err := s.template(filePath)
 	if err != nil {
 		return err
@@ -32,11 +32,11 @@ func (s *stdRenderer) RenderAndWrite(w io.Writer, filePath string, locals interf
 	return tpl.ExecuteTemplate(w, path.Base(filePath), locals)
 }
 
-func (s *stdRenderer) Ext() string {
+func (s *stdTemplateEngine) Ext() string {
 	return s.ext
 }
 
-func (s *stdRenderer) template(filePath string) (*template.Template, error) {
+func (s *stdTemplateEngine) template(filePath string) (*template.Template, error) {
 	if !s.cacheTemplates {
 		return template.ParseFiles(filePath)
 	}
@@ -53,6 +53,6 @@ func (s *stdRenderer) template(filePath string) (*template.Template, error) {
 	return tpl, nil
 }
 
-func NewStdRenderer(ext string, cacheTemplates bool) Renderer {
-	return &stdRenderer{ext, cacheTemplates, template.New(""), sync.Mutex{}}
+func NewStdTemplateEngine(ext string, cacheTemplates bool) TemplateEngine {
+	return &stdTemplateEngine{ext, cacheTemplates, template.New(""), sync.Mutex{}}
 }

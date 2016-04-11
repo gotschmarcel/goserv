@@ -15,7 +15,7 @@ import (
 func TestRecovery(t *testing.T) {
 	server := NewServer()
 	server.PanicRecovery = true
-	expectedErr := "Panic: no renderer set"
+	expectedErr := "Panic: template engine not set"
 
 	server.GetFunc("/", func(res ResponseWriter, req *Request) {
 		res.Render("none", nil)
@@ -89,8 +89,8 @@ func TestRenderer(t *testing.T) {
 
 	// Setup renderer with initial template cache
 	server.ViewRoot = "/views"
-	server.Renderer = NewStdRenderer(".tpl", true)
-	server.Renderer.(*stdRenderer).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
+	server.TemplateEngine = NewStdTemplateEngine(".tpl", true)
+	server.TemplateEngine.(*stdTemplateEngine).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
 
 	// Setup route
 	server.GetFunc("/myfile", func(res ResponseWriter, req *Request) {

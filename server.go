@@ -17,11 +17,11 @@ type TLS struct {
 
 type Server struct {
 	*Router
-	Addr          string
-	TLS           *TLS
-	ViewRoot      string
-	Renderer      Renderer
-	PanicRecovery bool
+	Addr           string
+	TLS            *TLS
+	ViewRoot       string
+	TemplateEngine TemplateEngine
+	PanicRecovery  bool
 }
 
 func (s *Server) Listen(addr string) error {
@@ -49,12 +49,12 @@ func (s *Server) Static(prefix string, dir http.Dir) {
 }
 
 func (s *Server) renderView(w io.Writer, name string, locals interface{}) error {
-	if s.Renderer == nil {
-		panic("no renderer set")
+	if s.TemplateEngine == nil {
+		panic("template engine not set")
 	}
 
-	filePath := path.Join(s.ViewRoot, name) + s.Renderer.Ext()
-	return s.Renderer.RenderAndWrite(w, filePath, locals)
+	filePath := path.Join(s.ViewRoot, name) + s.TemplateEngine.Ext()
+	return s.TemplateEngine.RenderAndWrite(w, filePath, locals)
 }
 
 func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
@@ -65,12 +65,12 @@ func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 
 func NewServer() *Server {
 	s := &Server{
-		Router:        NewRouter(),
-		Addr:          "",
-		TLS:           nil,
-		ViewRoot:      "",
-		Renderer:      nil,
-		PanicRecovery: false,
+		Router:         NewRouter(),
+		Addr:           "",
+		TLS:            nil,
+		ViewRoot:       "",
+		TemplateEngine: nil,
+		PanicRecovery:  false,
 	}
 
 	s.ErrorHandler = StdErrorHandler
