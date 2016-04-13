@@ -11,7 +11,6 @@ import (
 type Request struct {
 	*http.Request
 	Context       *Context
-	Locals        Locals
 	Params        Params
 	sanitizedPath string
 }
