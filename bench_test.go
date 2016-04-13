@@ -37,7 +37,7 @@ func BenchmarkNestedRouter(b *testing.B) {
 	handler := func(ResponseWriter, *Request) {}
 	s := NewServer()
 	s.ErrorHandler = nil
-	s.NewRouter("/v2").NewRouter("/v3").NewRouter("/v4").NewRouter("/v5").GetFunc("/1", handler)
+	s.SubRouter("/v2").SubRouter("/v3").SubRouter("/v4").SubRouter("/v5").GetFunc("/1", handler)
 
 	req, _ := http.NewRequest(http.MethodGet, "/v2/v3/v4/v5/1", nil)
 	for i := 0; i < b.N; i++ {
@@ -49,7 +49,7 @@ func BenchmarkNestedRouterWithParams(b *testing.B) {
 	handler := func(ResponseWriter, *Request) {}
 	s := NewServer()
 	s.ErrorHandler = nil
-	s.NewRouter("/v2").NewRouter("/v3").NewRouter("/v4").NewRouter("/v5").GetFunc("/:id", handler)
+	s.SubRouter("/v2").SubRouter("/v3").SubRouter("/v4").SubRouter("/v5").GetFunc("/:id", handler)
 
 	req, _ := http.NewRequest(http.MethodGet, "/v2/v3/v4/v5/1", nil)
 	for i := 0; i < b.N; i++ {

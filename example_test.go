@@ -15,7 +15,8 @@ func accessLogger(res goserv.ResponseWriter, req *goserv.Request) {
 	log.Printf("Access %s %s", req.Method, req.URL.String())
 }
 
-func ExampleSimpleServer() {
+func ExampleServer_simple() {
+	// A simple server example:
 	server := goserv.NewServer()
 
 	server.UseFunc(accessLogger)
@@ -52,12 +53,13 @@ func (m *MyController) paramUserID(res goserv.ResponseWriter, req *goserv.Reques
 	req.Context.Set("user", fmt.Sprintf("User (id: %s)", id))
 }
 
-func ExampleAPISubrouter() {
+func ExampleServer_subrouter() {
+	// Example API router:
 	controller := &MyController{"MyApp", log.New(os.Stderr, "[main] ", log.LstdFlags)}
 	server := goserv.NewServer()
 
 	server.UseFunc(controller.logName)
-	apiRouter := server.NewRouter("/api")
+	apiRouter := server.SubRouter("/api")
 
 	apiRouter.GetFunc("/users", controller.getUsers)
 	apiRouter.GetFunc("/users/:user_id", controller.getUser)
