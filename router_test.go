@@ -48,7 +48,7 @@ func newHistoryHandler() *historyHandler {
 func TestRouter(t *testing.T) {
 	h := newHistoryHandler()
 
-	router := NewRouter()
+	router := newRouter()
 
 	// Register middleware
 	router.Use(h.Handler("middleware"))

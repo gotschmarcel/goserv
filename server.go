@@ -65,7 +65,7 @@ func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 
 func NewServer() *Server {
 	s := &Server{
-		Router:         NewRouter(),
+		Router:         newRouter(),
 		Addr:           "",
 		TLS:            nil,
 		ViewRoot:       "",

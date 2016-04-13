@@ -208,7 +208,7 @@ func (r *Router) addRoute(route *Route) *Router {
 	return r
 }
 
-func NewRouter() *Router {
+func newRouter() *Router {
 	return &Router{paramHandlers: make(paramHandlerMap)}
 }
 
