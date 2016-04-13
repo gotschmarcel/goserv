@@ -12,10 +12,9 @@ type Router struct {
 	ErrorHandler ErrorHandler
 	StrictSlash  bool
 
-	path                      string
-	paramHandlers             paramHandlerMap
-	paramHandlerInvokedMemory map[*Request]emptyNameMap
-	routes                    []*Route
+	path          string
+	paramHandlers paramHandlerMap
+	routes        []*Route
 }
 
 func (r *Router) All(path string, handlers ...Handler) *Router {
@@ -153,7 +152,7 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	path := req.SanitizedPath()[len(r.path):] // Strip own prefix
 
-	defer r.deleteParamHandlerInvokedMemory(req)
+	paramInvokedMem := make(emptyKeyMap)
 
 	for _, route := range r.routes {
 		if !route.Match(path) {
@@ -161,7 +160,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 		}
 
 		route.FillParams(req)
-		if !r.handleParams(res, req, route.params) {
+		if !r.handleParams(res, req, route.params, paramInvokedMem) {
 			return
 		}
 
@@ -177,9 +176,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	}
 }
 
-func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string) bool {
-	invoked := r.getParamHandlerInvokedMemory(req)
-
+func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, invoked emptyKeyMap) bool {
 	// Call param handlers in the same order in which the parameters appear in the path.
 	for _, name := range orderedParams {
 		if _, ok := invoked[name]; ok {
@@ -206,32 +203,14 @@ func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []
 	return true
 }
 
-func (r *Router) getParamHandlerInvokedMemory(req *Request) emptyNameMap {
-	if memory, ok := r.paramHandlerInvokedMemory[req]; ok {
-		return memory
-	}
-
-	memory := make(emptyNameMap)
-	r.paramHandlerInvokedMemory[req] = memory
-
-	return memory
-}
-
-func (r *Router) deleteParamHandlerInvokedMemory(req *Request) {
-	delete(r.paramHandlerInvokedMemory, req)
-}
-
 func (r *Router) addRoute(route *Route) *Router {
 	r.routes = append(r.routes, route)
 	return r
 }
 
 func NewRouter() *Router {
-	return &Router{
-		paramHandlers:             make(paramHandlerMap),
-		paramHandlerInvokedMemory: make(map[*Request]emptyNameMap),
-	}
+	return &Router{paramHandlers: make(paramHandlerMap)}
 }
 
 type paramHandlerMap map[string][]ParamHandler
-type emptyNameMap map[string]empty
+type emptyKeyMap map[string]empty
