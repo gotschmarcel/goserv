@@ -10,10 +10,18 @@ import (
 	"net/http"
 )
 
+// ErrNotFound gets passed to a Router's ErrorHandler if
+// no route matched the request path or none of the matching routes wrote
+// a response.
 var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
-var StdErrorHandler = ErrorHandlerFunc(StdErrorHandlerFunc)
 
-func StdErrorHandlerFunc(res ResponseWriter, req *Request, err error) {
+// StdErrorHandler is the default ErrorHandler added to all Server instances
+// created with NewServer().
+//
+// All errors, except ErrNotFound, passed to it result in an internal server error (500) including
+// the message in the response body. The ErrNotFound error results
+// in a "not found" (404) response.
+var StdErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, err error) {
 	status := http.StatusInternalServerError
 
 	if err == ErrNotFound {
@@ -22,4 +30,4 @@ func StdErrorHandlerFunc(res ResponseWriter, req *Request, err error) {
 
 	res.WriteHeader(status)
 	fmt.Fprintf(res, err.Error())
-}
+})
