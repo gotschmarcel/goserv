@@ -62,22 +62,23 @@ import (
 // Note that all handler functions return the Route itself to allow method chaining, e.g.
 //	route.All(middleware).Get(getHandler).Put(putHandler)
 type Route struct {
-	middleware []Handler
-	methods    map[string][]Handler
-	matcher    *regexp.Regexp
-	params     []string
+	methods map[string][]Handler
+	matcher *regexp.Regexp
+	params  []string
 }
 
 // All registers the specified handlers as middleware in the order of appearance.
 func (r *Route) All(handlers ...Handler) *Route {
-	r.middleware = append(r.middleware, handlers...)
+	for _, method := range methodNames {
+		r.addMethodHandlers(method, handlers...)
+	}
 	return r
 }
 
 // AllFunc is an adapter for .All to register ordinary functions as middleware.
 func (r *Route) AllFunc(funcs ...func(ResponseWriter, *Request)) *Route {
 	for _, fn := range funcs {
-		r.middleware = append(r.middleware, HandlerFunc(fn))
+		r.All(HandlerFunc(fn))
 	}
 	return r
 }
@@ -179,7 +180,7 @@ func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
 		r.fillParams(req)
 	}
 
-	for _, handler := range append(r.middleware, r.methods[req.Method]...) {
+	for _, handler := range r.methods[req.Method] {
 		handler.ServeHTTP(res, req)
 
 		if res.Error() != nil {

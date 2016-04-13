@@ -10,6 +10,18 @@ import (
 	"strings"
 )
 
+var methodNames = []string{
+	http.MethodConnect,
+	http.MethodDelete,
+	http.MethodGet,
+	http.MethodHead,
+	http.MethodOptions,
+	http.MethodPatch,
+	http.MethodPost,
+	http.MethodPut,
+	http.MethodTrace,
+}
+
 // WrapHTTPHandler wraps a native http.Handler in a Handler.
 func WrapHTTPHandler(handler http.Handler) Handler {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
