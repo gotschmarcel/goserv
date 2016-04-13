@@ -9,55 +9,7 @@ import (
 	"regexp"
 )
 
-// A Route handles Requests by processing registered middleware and method handlers.
-//
-// Every route is build from a path specified in the call to a Server/Router's routing
-// functions, like .Method(path, ...handlers) or .Get(path, ...handlers).
-//
-// The Path
-//
-// A path describes the request paths to which a Route should respond, e.g.
-//	/mypath
-//
-// A Route created from "/mypath" will only match the request path if it is exactly
-// "/mypath".
-//
-// In case that the route should match everything starting with "/mypath" a wildcard
-// can be appended to the path, i.e.
-//	/mypath*
-//
-// The wildcard can be at any position in the path. It also possible to just use the wildcard
-// as path.
-//
-// Sometimes it is necessary to capture values from parts of the request path, so called parameters.
-// To include parameters in a Route the path must contain a named parameter, e.g.
-//	/users/:user_id
-//
-// Parameters always start with a ":" after a "/". The name (without the leading ":") can contain
-// alphanumeric symbols as well as "_" and "-". A Route can have as many parameters as you like separated
-// by at least a single "/".
-//	/:value1/:value2
-//
-// When a Route processes a Request it automatically extracts the captured parameter values from the path
-// and stores the values under their name in the .Param field of the Request.
-//
-// Strict vs non-strict
-//
-// Depending on the Server/Router's configuration routes are strict or non-strict. A strict Route matches
-// the path only if the path matches exactly the Route's pattern including the last slash. That means that
-// a strict Route created from "/path" matches "/path" but not "/path/".
-//
-// For non-strict routes the last slash is optional and the Route matches the path with or without a slash
-// at the end.
-//
-// Request Processing
-//
-// The order in which Handlers are registered does matter in terms of the processing order. The only
-// thing not relevant is wether a middleware handler (.All*) was registered before or
-// after a method handler (.Method, .Get, ...).
-//
-// The processing ends as soon as a handler wrote a response, an error was set on the ResponseWriter
-// or all handlers were invoked.
+// A Route handles requests by processing method handlers.
 //
 // Note that all handler functions return the Route itself to allow method chaining, e.g.
 //	route.All(middleware).Get(getHandler).Put(putHandler)
@@ -67,7 +19,7 @@ type Route struct {
 	params  []string
 }
 
-// All registers the specified handlers as middleware in the order of appearance.
+// All registers the specified handlers for all methods in the order of appearance.
 func (r *Route) All(handlers ...Handler) *Route {
 	for _, method := range methodNames {
 		r.addMethodHandlers(method, handlers...)
