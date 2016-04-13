@@ -13,7 +13,7 @@ import (
 func TestRouteHandlerChain(t *testing.T) {
 	w := httptest.NewRecorder()
 	res := &responseWriter{w: w}
-	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, nil, "/"}
+	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, "/"}
 	history := &historyWriter{}
 
 	route := newRoute("", false, false)
@@ -68,7 +68,7 @@ func TestRouteParams(t *testing.T) {
 	r, _ := http.NewRequest("", "/1234/5678", nil)
 	req := newRequest(r)
 
-	route.FillParams(req)
+	route.fillParams(req)
 
 	expected := Params{"p1": "1234", "p2": "5678"}
 	for name, value := range expected {
