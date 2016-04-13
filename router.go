@@ -159,7 +159,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 			continue
 		}
 
-		route.FillParams(req)
+		route.fillParams(req)
 		if !r.handleParams(res, req, route.params, paramInvokedMem) {
 			return
 		}
