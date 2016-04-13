@@ -88,7 +88,7 @@ func TestRenderer(t *testing.T) {
 	locals := &struct{ Title string }{"MyTitle"}
 
 	// Setup renderer with initial template cache
-	server.ViewRoot = "/views"
+	server.TemplateRoot = "/views"
 	server.TemplateEngine = NewStdTemplateEngine(".tpl", true)
 	server.TemplateEngine.(*stdTemplateEngine).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
 

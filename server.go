@@ -11,28 +11,60 @@ import (
 	"path"
 )
 
+// A TLS contains both the certificate and key file paths.
 type TLS struct {
 	CertFile, KeyFile string
 }
 
+// A Server is the main instance and entry point for all routing.
+//
+// It is compatible with the http package an can be used as a http.Handler.
+// A Server is also a Router and provides the same fields and methods as the
+// goserv.Router.
+//
+// Additionally to all routing methods a Server provides methods to register
+// static file servers, short-hand methods for
+// http.ListenAndServe as well as http.ListenAndServeTLS and the possibility
+// to recover from panics.
+//
+// Also a TemplateRoot and TemplateEngine can be set, latter is then available
+// through ResponseWriter.Render. The actual file path given to the TemplateEngine
+// is build from the TemplateRoot, template name given to ResponseWriter.Render and
+// the file extension from TemplateEngine.Ext.
+//
+//	<Server.TemplateRoot>/<TemplateName><TemplateEngine.Ext()>
 type Server struct {
+	// Embedded Router
 	*Router
-	Addr           string
-	TLS            *TLS
-	ViewRoot       string
+
+	// TCP address to listen on, set by .Listen or .ListenTLS
+	Addr string
+
+	// TLS information set by .ListenTLS or nil if .Listen was used
+	TLS *TLS
+
+	// TemplateRoot path to the folder containing template files
+	TemplateRoot string
+
+	// TemplateEngine to use when ResponseWriter.Render is called
 	TemplateEngine TemplateEngine
-	PanicRecovery  bool
+
+	// Enables/Disables panic recovery
+	PanicRecovery bool
 }
 
+// Listen is a convenience method that uses http.ListenAndServe.
 func (s *Server) Listen(addr string) error {
 	return http.ListenAndServe(addr, s)
 }
 
+// ListenTLS is a convenience method that uses http.ListenAndServeTLS.
 func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 	s.TLS = &TLS{certFile, keyFile}
 	return http.ListenAndServeTLS(addr, certFile, keyFile, s)
 }
 
+// ServeHTTP dispatches the request to the internal Router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := newResponseWriter(w, s)
 	req := newRequest(r)
@@ -44,8 +76,25 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.Router.ServeHTTP(res, req)
 }
 
+// Static registers a http.FileServer for the specified directory under the given
+// prefix.
+//
+// Example:
+//	package main
+//
+//	import (
+//		"github.com/gotschmarcel/goserv"
+//	)
+//
+//	func main() {
+//		server := goserv.NewServer()
+//
+//		server.Static("/", "/usr/share/doc")
+//		log.Fatal(server.Listen(":12345"))
+//	}
+//
 func (s *Server) Static(prefix string, dir http.Dir) {
-	s.Prefix(prefix, WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
+	s.All(prefix+"*", WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
 }
 
 func (s *Server) renderView(w io.Writer, name string, locals interface{}) error {
@@ -53,7 +102,7 @@ func (s *Server) renderView(w io.Writer, name string, locals interface{}) error 
 		panic("template engine not set")
 	}
 
-	filePath := path.Join(s.ViewRoot, name) + s.TemplateEngine.Ext()
+	filePath := path.Join(s.TemplateRoot, name) + s.TemplateEngine.Ext()
 	return s.TemplateEngine.RenderAndWrite(w, filePath, locals)
 }
 
@@ -63,12 +112,16 @@ func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 	}
 }
 
+// NewServer returns a newly allocated and initialized Server instance.
+//
+// By default the Server has no template engine, the template root is "" and
+// panic recovery is disabled. The Router's ErrorHandler is set to the StdErrorHandler.
 func NewServer() *Server {
 	s := &Server{
 		Router:         newRouter(),
 		Addr:           "",
 		TLS:            nil,
-		ViewRoot:       "",
+		TemplateRoot:   "",
 		TemplateEngine: nil,
 		PanicRecovery:  false,
 	}
