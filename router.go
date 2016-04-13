@@ -8,114 +8,153 @@ import (
 	"net/http"
 )
 
+// A Router dispatches incoming requests to matching routes and routers.
+//
+// Note that most methods return the Router itself to allow method chaining.
+// Some routes like .Route or .SubRouter return the created instances instead though.
 type Router struct {
+	// Handles errors set on the ResponseWriter with .SetError(err), not found errors
+	// and recovered panics.
 	ErrorHandler ErrorHandler
-	StrictSlash  bool
+
+	// Defines how Routes treat the trailing slash in a path.
+	//
+	// When enabled routes with a trailing slash are considered to be different routes
+	// than routes without a trailing slash.
+	StrictSlash bool
 
 	path          string
 	paramHandlers paramHandlerMap
 	routes        []*Route
 }
 
+// All registers the specified handlers in the order of appearance for the given path.
 func (r *Router) All(path string, handlers ...Handler) *Router {
-	r.NewRoute(path).All(handlers...)
+	r.Route(path).All(handlers...)
 	return r
 }
 
+// AllFunc is an adapter for All for registering ordinary functions.
 func (r *Router) AllFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.NewRoute(path).AllFunc(funcs...)
+	r.Route(path).AllFunc(funcs...)
 	return r
 }
 
+// Method registers the specified handlers in the order of appearance for the given path
+// and method.
 func (r *Router) Method(method, path string, handlers ...Handler) *Router {
-	r.NewRoute(path).Method(method, handlers...)
+	r.Route(path).Method(method, handlers...)
 	return r
 }
 
+// MethodFunc is an adapater for Method for registering ordinary functions.
 func (r *Router) MethodFunc(method, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.NewRoute(path).MethodFunc(method, funcs...)
+	r.Route(path).MethodFunc(method, funcs...)
 	return r
 }
 
+// Methods is an adapter for Method for registering handlers on a path for multiple methods
+// in a single call.
 func (r *Router) Methods(methods []string, path string, handlers ...Handler) *Router {
-	r.NewRoute(path).Methods(methods, handlers...)
+	r.Route(path).Methods(methods, handlers...)
 	return r
 }
 
+// MethodsFunc is an adapter for Method for registering ordinary functions on a path
+// for multiple methods in a single call.
 func (r *Router) MethodsFunc(methods []string, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.NewRoute(path).MethodsFunc(methods, funcs...)
+	r.Route(path).MethodsFunc(methods, funcs...)
 	return r
 }
 
+// Get is an adapter for Method registering the handlers for the "GET" method on path.
 func (r *Router) Get(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodGet, path, handlers...)
 }
 
+// GetFunc is an adapter for MethodFunc registering ordinary functions for the "GET" method on path.
 func (r *Router) GetFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
 	return r.MethodFunc(http.MethodGet, path, funcs...)
 }
 
+// Post is an adapter for Method registering the handlers for the "POST" method on path.
 func (r *Router) Post(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodPost, path, handlers...)
 }
 
+// PostFunc is an adapter for MethodFunc registering ordinary functions for the "POST" method on path.
 func (r *Router) PostFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
 	return r.MethodFunc(http.MethodPost, path, funcs...)
 }
 
+// Put is an adapter for Method registering the handlers for the "PUT" method on path.
 func (r *Router) Put(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodPut, path, handlers...)
 }
 
+// PutFunc is an adapter for MethodFunc registering ordinary functions for the "PUT" method on path.
 func (r *Router) PutFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
 	return r.MethodFunc(http.MethodPut, path, funcs...)
 }
 
+// Delete is an adapter for Method registering the handlers for the "DELETE" method on path.
 func (r *Router) Delete(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodDelete, path, handlers...)
 }
 
+// DeleteFunc is an adapter for MethodFunc registering ordinary functions for the "DELETE" method on path.
 func (r *Router) DeleteFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
 	return r.MethodFunc(http.MethodDelete, path, funcs...)
 }
 
+// Patch is an adapter for Method registering the handlers for the "PATCH" method on path.
 func (r *Router) Patch(path string, handlers ...Handler) *Router {
 	return r.Method(http.MethodPatch, path, handlers...)
 }
 
+// PatchFunc is an adapter for MethodFunc registering ordinary functions for the "PATCH" method on path.
 func (r *Router) PatchFunc(path string, funcs ...func(ResponseWriter, *Request)) *Router {
 	return r.MethodFunc(http.MethodPatch, path, funcs...)
 }
 
+// Param registers a handler for the specified parameter name (without the leading ":").
+//
+// Parameter handlers are invoked with the extracted value before any route is processed.
+// All handlers are only invoked once per request, even though the request may be dispatched
+// to multiple routes.
 func (r *Router) Param(name string, handler ParamHandler) *Router {
 	r.paramHandlers[name] = append(r.paramHandlers[name], handler)
 	return r
 }
 
+// ParamFunc is an adapter for Param registering an ordinary function for the parameter.
 func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string)) *Router {
 	return r.Param(name, ParamHandlerFunc(fn))
 }
 
+// Use registers the specified handlers in the order of appearance as middleware.
+// Middleware is always processed before any dispatching happens.
 func (r *Router) Use(handlers ...Handler) *Router {
-	r.NewRoute("*").All(handlers...)
+	r.Route("*").All(handlers...)
 	return r
 }
 
+// UseFunc is an adapter for Use registering ordinary functions as middleware.
 func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
-	r.NewRoute("*").AllFunc(funcs...)
+	r.Route("*").AllFunc(funcs...)
 	return r
 }
 
-func (r *Router) Prefix(prefix string, handlers ...Handler) *Router {
-	return r.addRoute(newRoute(prefix, r.StrictSlash, true).All(handlers...))
-}
-
-func (r *Router) PrefixFunc(prefix string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.addRoute(newRoute(prefix, r.StrictSlash, true).AllFunc(funcs...))
-}
-
-func (r *Router) NewRouter(prefix string) *Router {
-	router := NewRouter()
+// SubRouter returns a new sub router mounted on the specified prefix.
+//
+// All sub routers automatically inherit their StrictSlash behaviour,
+// have the full mount path and no error handler. It is possible though
+// to set a custom error handler for a sub router.
+//
+// Note that this function returns the new sub router instead of the
+// parent router!
+func (r *Router) SubRouter(prefix string) *Router {
+	router := newRouter()
 	router.StrictSlash = r.StrictSlash
 	router.path = r.path + prefix
 
@@ -124,16 +163,21 @@ func (r *Router) NewRouter(prefix string) *Router {
 	return router
 }
 
-func (r *Router) NewRoute(pattern string) *Route {
-	route := newRoute(pattern, r.StrictSlash, false)
+// Route returns a new Route for the given path.
+func (r *Router) Route(path string) *Route {
+	route := newRoute(path, r.StrictSlash, false)
 	r.addRoute(route)
 	return route
 }
 
+// Path returns the routers full mount path.
 func (r *Router) Path() string {
 	return r.path
 }
 
+// ServeHTTP dispatches the request to middleware and matching handlers.
+//
+// Errors are only processed if an ErrorHandler was configured.
 func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 	r.invokeHandlers(res, req)
 

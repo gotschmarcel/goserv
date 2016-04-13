@@ -63,7 +63,7 @@ func TestRouter(t *testing.T) {
 	router.Methods([]string{http.MethodGet, http.MethodDelete}, "/multi", h.WriteHandler("multi-handler"))
 
 	// Register route
-	router.NewRoute("/route").Get(h.WriteHandler("route-handler"))
+	router.Route("/route").Get(h.WriteHandler("route-handler"))
 
 	// Register parameter routes
 	router.Get("/param1/:value1/param2/:value2", h.Handler("param-route1"))
@@ -72,11 +72,8 @@ func TestRouter(t *testing.T) {
 	router.Param("value2", h.ParamHandler())
 
 	// Register sub routers
-	sr1 := router.NewRouter("/srouter1").Get("/get", h.WriteHandler("srouter1-handler"))
-	sr1.NewRouter("/srouter2").Get("/get", h.WriteHandler("srouter2-handler")).Get("/error", h.HandlerWithError("srouter2-error"))
-
-	// Register prefix route
-	router.Prefix("/prefix", h.WriteHandler("prefix-route"))
+	sr1 := router.SubRouter("/srouter1").Get("/get", h.WriteHandler("srouter1-handler"))
+	sr1.SubRouter("/srouter2").Get("/get", h.WriteHandler("srouter2-handler")).Get("/error", h.HandlerWithError("srouter2-error"))
 
 	tests := []struct {
 		method string
@@ -99,9 +96,6 @@ func TestRouter(t *testing.T) {
 		{http.MethodGet, "/srouter1/get", []string{"middleware", "srouter1-handler"}, "srouter1-handler", nil},
 		{http.MethodGet, "/srouter1/srouter2/get", []string{"middleware", "srouter2-handler"}, "srouter2-handler", nil},
 		{http.MethodGet, "/srouter1/srouter2/error", []string{"middleware"}, "", fmt.Errorf("srouter2-error")},
-
-		{http.MethodGet, "/prefix", []string{"middleware", "prefix-route"}, "prefix-route", nil},
-		{http.MethodGet, "/prefix/more", []string{"middleware", "prefix-route"}, "prefix-route", nil},
 	}
 
 	for index, test := range tests {
