@@ -9,13 +9,42 @@ import (
 	"net/http"
 )
 
+// A ResponseWriter is used to build an HTTP response.
+//
+// The ResponseWriter embeds the native http.ResponseWriter, thus
+// all fields are still available through ResponseWriter. Additionally
+// to the native http.ResponseWriter a ResponseWriter implements
+// functions to check if the body was written, the current status or
+// if an error was set.
+//
+// It also provides helper functions to make JSON responses or the
+// use of templates even easier.
 type ResponseWriter interface {
+	// Embedded http.ResponseWriter interface.
 	http.ResponseWriter
+
+	// Written returns true if the response header was written.
 	Written() bool
+
+	// Returns the status code written to the response header.
+	// If no status was written 0 is returned.
 	Status() int
+
+	// Returns any error set with SetError() or nil if none was set.
 	Error() error
+
+	// Sets a response error which will be passed to the ErrorHandler
+	// by the Server/Router.
 	SetError(error)
+
+	// Render renders the template with the given name and locals.
+	// The result is written to the body.
+	//
+	// Render works only if a TemplateEngine is registered to the
+	// main Server and results in a panic otherwise.
 	Render(string, interface{})
+
+	// JSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
 	JSON(interface{})
 }
 
