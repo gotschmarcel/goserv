@@ -10,18 +10,25 @@ import (
 	"strings"
 )
 
+// WrapHTTPHandler wraps a native http.Handler in a Handler.
 func WrapHTTPHandler(handler http.Handler) Handler {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		handler.ServeHTTP(http.ResponseWriter(res), req.Request)
 	})
 }
 
+// WrapHTTPHandlerFunc wraps ordinary functions with the http.HandlerFunc
+// format in a Handler.
 func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) Handler {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		fn(http.ResponseWriter(res), req.Request)
 	})
 }
 
+// SanitizePath returns the clean version of the specified path.
+//
+// It prepends a "/" to the path if none was found, uses path.Clean to resolve
+// any "." and ".." and adds back any trailing slashes.
 func SanitizePath(p string) string {
 	if len(p) == 0 {
 		return "/"

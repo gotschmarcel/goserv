@@ -11,8 +11,17 @@ import (
 	"sync"
 )
 
+// A TemplateEngine renders templates files using the specified locals and writes
+// the result to an io.Writer.
+//
+// Note that RenderAndWrite must be thread-safe!
 type TemplateEngine interface {
+	// RenderAndWrite renders the template at filePath using the specified
+	// locals and writes the result to w.
 	RenderAndWrite(w io.Writer, filePath string, locals interface{}) error
+
+	// Ext returns the file extension (including the leading ".") for the
+	// files supported by the TemplateEngine.
 	Ext() string
 }
 
@@ -53,6 +62,11 @@ func (s *stdTemplateEngine) template(filePath string) (*template.Template, error
 	return tpl, nil
 }
 
+// NewStdTemplateEngine returns a new TemplateEngine using Go's html/template package for
+// the specified file extension.
+//
+// Also caching of templates can be enabled. This will cache every template after
+// its first use.
 func NewStdTemplateEngine(ext string, cacheTemplates bool) TemplateEngine {
 	return &stdTemplateEngine{ext, cacheTemplates, template.New(""), sync.Mutex{}}
 }
