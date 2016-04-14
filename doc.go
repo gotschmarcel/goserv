@@ -38,16 +38,13 @@
 // Path Syntax
 //
 // All Routes and Routers are registered under a path. This path is matched against the path
-// of incoming requests.
-//
-// A Route created from "/mypath" will only match the request path if it is exactly
-// "/mypath".
-//
-// In case that the Route should match everything starting with "/mypath" a wildcard
+// of incoming requests. A Route created from "/mypath" will only match the request path if it is exactly
+// "/mypath". In case that the Route should match everything starting with "/mypath" a wildcard
 // can be appended to the path, i.e.
+//
 //	/mypath*
 //
-// The wildcard can be at any position in the path. It also possible to just use the wildcard
+// The wildcard can be at any position in the path. It is also possible to just use the wildcard
 // as path.
 //
 // Sometimes it is necessary to capture values from parts of the request path, so called parameters.
@@ -60,13 +57,13 @@
 //	/:value1/:value2
 //
 // Routers allow you to register handlers for each parameter in a Route. Each handler gets invoked
-// once per parameter and request. That means even though a Router may invoked multiple Routes the
+// once per request. That means even though a Router may invoke multiple Routes the
 // parameter handlers are invoked only once.
 //
 //      router.Get("/users/:user_id", handler)
 //      router.Param("user_id", userIDHandler)
 //
-// When a Route processes a Request it automatically extracts the captured parameter values from the path
+// When a Route processes a request it automatically extracts the captured parameter values from the path
 // and stores the values under their name in the .Param field of the Request.
 //
 // Strict vs non-strict Slash
@@ -92,5 +89,5 @@
 //      server.Use(C)
 //      server.SubRouter("/sub", D)
 //
-// All incoming request will follow the order "ABCD". The
+// All incoming request will follow the order "ABCD".
 package goserv
