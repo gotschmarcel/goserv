@@ -11,7 +11,7 @@ import (
 // A Router dispatches incoming requests to matching routes and routers.
 //
 // Note that most methods return the Router itself to allow method chaining.
-// Some routes like .Route or .SubRouter return the created instances instead though.
+// Some methods like .Route or .SubRouter return the created instances instead.
 type Router struct {
 	// Handles errors set on the ResponseWriter with .SetError(err), not found errors
 	// and recovered panics.
