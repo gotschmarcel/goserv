@@ -46,6 +46,10 @@ type ResponseWriter interface {
 
 	// JSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
 	JSON(interface{})
+
+	// Redirect replies to the request with a redirect url. The specified code should
+	// be in the 3xx range.
+	Redirect(req *Request, url string, code int)
 }
 
 type responseWriter struct {
@@ -104,6 +108,10 @@ func (r *responseWriter) JSON(v interface{}) {
 	if err := enc.Encode(v); err != nil {
 		r.SetError(err)
 	}
+}
+
+func (r *responseWriter) Redirect(req *Request, url string, code int) {
+	http.Redirect(r, req.Request, url, code)
 }
 
 func newResponseWriter(w http.ResponseWriter, server *Server) ResponseWriter {
