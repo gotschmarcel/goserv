@@ -185,9 +185,9 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 		return
 	}
 
-	err := ErrNotFound
-	if e := res.Error(); e != nil {
-		err = e
+	err := res.Error()
+	if err == nil {
+		err = ErrNotFound
 	}
 
 	r.ErrorHandler.ServeHTTP(res, req, err)
