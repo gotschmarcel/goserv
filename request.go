@@ -25,12 +25,8 @@ type Request struct {
 	// the Request's path. See Route.
 	Params Params
 
-	sanitizedPath string
-}
-
-// SanitizedPath returns the Request's path sanitized with SanitizePath().
-func (r *Request) SanitizedPath() string {
-	return r.sanitizedPath
+	// Sanitized http.Request.URL.Path
+	SanitizedPath string
 }
 
 func newRequest(r *http.Request) *Request {

@@ -165,7 +165,7 @@ func (r *Route) fillParams(req *Request) {
 		return
 	}
 
-	matches := r.matcher.FindAllStringSubmatch(req.SanitizedPath(), -1)
+	matches := r.matcher.FindAllStringSubmatch(req.SanitizedPath, -1)
 	if len(matches) == 0 {
 		return
 	}

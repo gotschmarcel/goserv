@@ -194,7 +194,7 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 }
 
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
-	path := req.SanitizedPath()[len(r.path):] // Strip own prefix
+	path := req.SanitizedPath[len(r.path):] // Strip own prefix
 
 	paramInvokedMem := make(emptyKeyMap)
 
