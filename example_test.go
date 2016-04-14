@@ -5,65 +5,80 @@
 package goserv_test
 
 import (
-	"fmt"
 	"github.com/gotschmarcel/goserv"
+	"io"
 	"log"
-	"os"
 )
 
-func accessLogger(res goserv.ResponseWriter, req *goserv.Request) {
-	log.Printf("Access %s %s", req.Method, req.URL.String())
-}
-
 func ExampleServer_simple() {
-	// A simple server example:
+	// A simple server example.
+	//
+	// First an access logging function is registered which gets invoked
+	// before the request is forwarded to the home handler. After that
+	// the home handler is registered which is the final handler writing
+	// a simple message to the response body.
+	//
+	// As a last step server.Listen is called to start listening for incoming
+	// requests.
 	server := goserv.NewServer()
 
-	server.UseFunc(accessLogger)
-	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
-		fmt.Fprint(res, "Home")
+	server.UseFunc(func(res goserv.ResponseWriter, req *goserv.Request) {
+		log.Printf("Access %s %s", req.Method, req.URL.String())
+	}).GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
+		io.WriteString(res, "Home")
 	})
 
-	// Everything else is a 404 error.
-
-	log.Fatalln(server.Listen(":8080"))
-}
-
-type MyController struct {
-	AppName string
-	Logger  *log.Logger
-}
-
-func (m *MyController) logName(res goserv.ResponseWriter, req *goserv.Request) {
-	m.Logger.Printf("%s %s", req.Method, req.URL.String())
-}
-
-func (m *MyController) getUsers(res goserv.ResponseWriter, req *goserv.Request) {
-	m.Logger.Println("Requesting all users")
-	fmt.Fprint(res, "Alex, Peter, Marc")
-}
-
-func (m *MyController) getUser(res goserv.ResponseWriter, req *goserv.Request) {
-	m.Logger.Printf("Requesting user: %s", req.Params.Get("user_id"))
-	fmt.Fprint(res, req.Context.Get("user").(string))
-}
-
-func (m *MyController) paramUserID(res goserv.ResponseWriter, req *goserv.Request, id string) {
-	m.Logger.Printf("Handling user ID: %s", id)
-	req.Context.Set("user", fmt.Sprintf("User (id: %s)", id))
+	log.Fatalln(server.Listen(":12345"))
 }
 
 func ExampleServer_subrouter() {
-	// Example API router:
-	controller := &MyController{"MyApp", log.New(os.Stderr, "[main] ", log.LstdFlags)}
+	// Example server with API sub router:
 	server := goserv.NewServer()
 
-	server.UseFunc(controller.logName)
 	apiRouter := server.SubRouter("/api")
 
-	apiRouter.GetFunc("/users", controller.getUsers)
-	apiRouter.GetFunc("/users/:user_id", controller.getUser)
-	apiRouter.ParamFunc("user_id", controller.paramUserID)
+	apiRouter.GetFunc("/users", func(res goserv.ResponseWriter, req *goserv.Request) {
+		// ...
+	})
+
+	apiRouter.GetFunc("/users/:user_id", func(res goserv.ResponseWriter, req *goserv.Request) {
+		// ...
+	})
+
+	apiRouter.ParamFunc("user_id", func(res goserv.ResponseWriter, req *goserv.Request, val string) {
+		// ...
+	})
 
 	log.Fatalln(server.Listen(":8080"))
+}
+
+func ExampleServer_static() {
+	// Example file server:
+	server := goserv.NewServer()
+
+	server.Static("/", "/usr/share/doc")
+	log.Fatalln(server.Listen(":12345"))
+}
+
+func ExampleServer_templates() {
+	// Example server rendering template files with Go's html/template package.
+	//
+	// The template files are placed inside the views folder in the current working
+	// directory. Inside of the views folder is a file called home.tpl with the following
+	// content:
+	//
+	//	<html>
+	//		<head><title>{{.Title}}</title></head>
+	//		<body>Welcome Home</body>
+	//	</html>
+	server := goserv.NewServer()
+
+	server.TemplateEngine = goserv.NewStdTemplateEngine(".tpl", true /* enable caches */)
+	server.TemplateRoot = "views" // Relative folder
+
+	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
+		res.Render("home", &struct{ Title string }{Title: "Home"})
+	})
+
+	log.Fatalln(server.Listen(":12345"))
 }
