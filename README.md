@@ -66,4 +66,4 @@ func main() {
 
 ## License
 
-MIT licensed. See the LICENSE for more information.
+MIT licensed. See the LICENSE file for more information.
