@@ -46,7 +46,7 @@ func secureMiddleware(res goserv.ResponseWriter, req *goserv.Request) {
 
 func userHandler(res goserv.ResponseWriter, req *goserv.Request) {
 	id := req.Param.Get("user_id")
-	// ...
+	res.JSON(&struct{ ID string }{id})
 }
 
 func main() {
