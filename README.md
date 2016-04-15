@@ -6,7 +6,7 @@
 A fast, easy and minimalistic framework for
 web applications in Go.
 
-> goserv requires at least Go v1.5.0
+> goserv requires at least Go v1.6.0
 
 ## Features
 
