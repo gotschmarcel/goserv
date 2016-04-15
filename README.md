@@ -1,7 +1,12 @@
 # goserv
 
+[![GoDoc](https://godoc.org/github.com/gotschmarcel/goserv?status.svg)](https://godoc.org/github.com/gotschmarcel/goserv)
+[![Build Status](https://travis-ci.org/gotschmarcel/goserv.svg?branch=dev)](https://travis-ci.org/gotschmarcel/goserv)
+
 A fast, easy and minimalistic framework for
 web applications in Go.
+
+> goserv requires at least Go v1.5.0
 
 ## Features
 
@@ -46,14 +51,14 @@ func userHandler(res goserv.ResponseWriter, req *goserv.Request) {
 
 func main() {
 	server := goserv.NewServer()
-	
+
 	server.UseFunc(accessLogger)
 	server.GetFunc("/", homeHandler)
-	
+
 	api := server.SubRouter("/api")
 	api.UseFunc(secureMiddleware)
 	api.GetFunc("/users/:user_id", userHandler)
-	
+
 	log.Fatalln(server.Listen(":8080"))
 }
 
