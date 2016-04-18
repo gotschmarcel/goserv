@@ -18,7 +18,7 @@
 //      server.Get("/", homeHandler)
 //
 // The first argument in the Get() call is the path for which the
-// handler gets registered. To learn more about paths take a look at the Path section.
+// handler gets registered. To learn more about paths take a look at the "Path Syntax" section.
 // As the name of the function suggests the requests are only getting dispatched to the handler
 // if the request method is "GET". There are a lot more methods like this one available, just take
 // a look at the documentation of the Router.
@@ -44,7 +44,7 @@
 //
 //	/mypath*
 //
-// The wildcard can be at any position in the path. It is also possible to just use the wildcard
+// The wildcard can be at any position in the path. It is also possible to use just the wildcard
 // as path.
 //
 // Sometimes it is necessary to capture values from parts of the request path, so called parameters.
