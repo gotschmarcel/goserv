@@ -103,9 +103,9 @@ func (r *responseWriter) Render(name string, locals interface{}) {
 }
 
 func (r *responseWriter) JSON(v interface{}) {
-	enc := json.NewEncoder(r)
+	r.w.Header().Set("Content-Type", "application/json")
 
-	if err := enc.Encode(v); err != nil {
+	if err := json.NewEncoder(r).Encode(v); err != nil {
 		r.SetError(err)
 	}
 }
