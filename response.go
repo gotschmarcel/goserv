@@ -6,6 +6,7 @@ package goserv
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -46,6 +47,9 @@ type ResponseWriter interface {
 
 	// JSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
 	JSON(interface{})
+
+	// String sends a simple plain text response.
+	String(string)
 
 	// Redirect replies to the request with a redirect url. The specified code should
 	// be in the 3xx range.
@@ -106,6 +110,12 @@ func (r *responseWriter) JSON(v interface{}) {
 	r.w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(r).Encode(v); err != nil {
+		r.SetError(err)
+	}
+}
+
+func (r *responseWriter) String(data string) {
+	if _, err := io.WriteString(r, data); err != nil {
 		r.SetError(err)
 	}
 }
