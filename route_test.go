@@ -54,8 +54,8 @@ func TestRouteHandlerChain(t *testing.T) {
 		}
 	}
 
-	if res.Status() != http.StatusOK {
-		t.Errorf("Wrong status code: %d != %d", res.Status(), http.StatusOK)
+	if res.Code() != http.StatusOK {
+		t.Errorf("Wrong status code: %d != %d", res.Code(), http.StatusOK)
 	}
 
 	if w.Body.String() != "Done" {

@@ -29,7 +29,7 @@ type ResponseWriter interface {
 
 	// Returns the status code written to the response header.
 	// If no status was written 0 is returned.
-	Status() int
+	Code() int
 
 	// Returns any error set with SetError() or nil if none was set.
 	Error() error
@@ -84,7 +84,7 @@ func (r *responseWriter) Written() bool {
 	return r.status != 0
 }
 
-func (r *responseWriter) Status() int {
+func (r *responseWriter) Code() int {
 	return r.status
 }
 
