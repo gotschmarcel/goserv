@@ -45,11 +45,11 @@ type ResponseWriter interface {
 	// main Server and results in a panic otherwise.
 	Render(string, interface{})
 
-	// JSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
-	JSON(interface{})
+	// WriteJSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
+	WriteJSON(interface{})
 
-	// String sends a simple plain text response.
-	String(string)
+	// WriteString sends a simple plain text response.
+	WriteString(string)
 
 	// Redirect replies to the request with a redirect url. The specified code should
 	// be in the 3xx range.
@@ -106,7 +106,7 @@ func (r *responseWriter) Render(name string, locals interface{}) {
 	}
 }
 
-func (r *responseWriter) JSON(v interface{}) {
+func (r *responseWriter) WriteJSON(v interface{}) {
 	r.w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(r).Encode(v); err != nil {
@@ -114,7 +114,7 @@ func (r *responseWriter) JSON(v interface{}) {
 	}
 }
 
-func (r *responseWriter) String(data string) {
+func (r *responseWriter) WriteString(data string) {
 	if _, err := io.WriteString(r, data); err != nil {
 		r.SetError(err)
 	}
