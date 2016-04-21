@@ -30,11 +30,11 @@ type Request struct {
 	SanitizedPath string
 }
 
-// JSON parses the request's body using the encoding/json Decoder. In case
+// ReadJSON parses the request's body using the encoding/json Decoder. In case
 // of a decoding error the error is returned.
 //
 // Note: The request's body is closed after calling this method.
-func (r *Request) JSON(v interface{}) error {
+func (r *Request) ReadJSON(v interface{}) error {
 	err := json.NewDecoder(r.Body).Decode(v)
 	r.Body.Close()
 
