@@ -13,56 +13,56 @@ import (
 // Note that all handler functions return the Route itself to allow method chaining, e.g.
 //	route.All(middleware).Get(getHandler).Put(putHandler)
 type Route struct {
-	methods map[string][]func(ResponseWriter, *Request)
+	methods map[string][]HandlerFunc
 	path    *path
 }
 
 // All registers the specified functions for all methods in the order of appearance.
-func (r *Route) All(funcs ...func(ResponseWriter, *Request)) *Route {
+func (r *Route) All(fn HandlerFunc) *Route {
 	for _, method := range methodNames {
-		r.addMethodHandlers(method, funcs...)
+		r.addMethodHandlerFunc(method, fn)
 	}
 	return r
 }
 
 // Method registers the functions for the specified HTTP method in the order of appearance.
-func (r *Route) Method(method string, funcs ...func(ResponseWriter, *Request)) *Route {
-	r.addMethodHandlers(method, funcs...)
+func (r *Route) Method(method string, fn HandlerFunc) *Route {
+	r.addMethodHandlerFunc(method, fn)
 	return r
 }
 
 // Methods is an adapter for .Method to register functions
 // for multiple methods in one call.
-func (r *Route) Methods(methods []string, funcs ...func(ResponseWriter, *Request)) *Route {
+func (r *Route) Methods(methods []string, fn HandlerFunc) *Route {
 	for _, method := range methods {
-		r.Method(method, funcs...)
+		r.Method(method, fn)
 	}
 	return r
 }
 
 // Get is an adapter for .Method and registers the functions for the "GET" method.
-func (r *Route) Get(funcs ...func(ResponseWriter, *Request)) *Route {
-	return r.Method(http.MethodGet, funcs...)
+func (r *Route) Get(fn HandlerFunc) *Route {
+	return r.Method(http.MethodGet, fn)
 }
 
 // Post is an adapter for .Method and registers the functions for the "POST" method.
-func (r *Route) Post(funcs ...func(ResponseWriter, *Request)) *Route {
-	return r.Method(http.MethodPost, funcs...)
+func (r *Route) Post(fn HandlerFunc) *Route {
+	return r.Method(http.MethodPost, fn)
 }
 
 // Put is an adapter for .Method and registers the functions for the "PUT" method.
-func (r *Route) Put(funcs ...func(ResponseWriter, *Request)) *Route {
-	return r.Method(http.MethodPut, funcs...)
+func (r *Route) Put(fn HandlerFunc) *Route {
+	return r.Method(http.MethodPut, fn)
 }
 
 // Delete is an adapter for .Method and registers the functions for the "DELETE" method.
-func (r *Route) Delete(funcs ...func(ResponseWriter, *Request)) *Route {
-	return r.Method(http.MethodDelete, funcs...)
+func (r *Route) Delete(fn HandlerFunc) *Route {
+	return r.Method(http.MethodDelete, fn)
 }
 
 // Patch is an adapter for .Method and registers the functions for the "PATCH" method.
-func (r *Route) Patch(funcs ...func(ResponseWriter, *Request)) *Route {
-	return r.Method(http.MethodPatch, funcs...)
+func (r *Route) Patch(fn HandlerFunc) *Route {
+	return r.Method(http.MethodPatch, fn)
 }
 
 // ServeHTTP processes the Request by invoking all middleware and all method handlers for the
@@ -104,8 +104,8 @@ func (r *Route) fillParams(req *Request) {
 	r.path.FillParams(req)
 }
 
-func (r *Route) addMethodHandlers(method string, funcs ...func(ResponseWriter, *Request)) {
-	r.methods[method] = append(r.methods[method], funcs...)
+func (r *Route) addMethodHandlerFunc(method string, fn HandlerFunc) {
+	r.methods[method] = append(r.methods[method], fn)
 }
 
 func newRoute(pattern string, strict, prefixOnly bool) *Route {
@@ -116,7 +116,7 @@ func newRoute(pattern string, strict, prefixOnly bool) *Route {
 	}
 
 	return &Route{
-		methods: make(map[string][]func(ResponseWriter, *Request)),
+		methods: make(map[string][]HandlerFunc),
 		path:    path,
 	}
 }

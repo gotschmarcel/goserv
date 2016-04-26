@@ -4,6 +4,13 @@
 
 package goserv
 
+// A ErrorHandlerFunc is the last handler in the request chain and
+// is responsible for handling errors that occur during the
+// request processing.
+//
+// A ErrorHandlerFunc should always write a response!
+type ErrorHandlerFunc func(ResponseWriter, *Request, error)
+
 // A Handler processes an HTTP request and may respond to it.
 type Handler interface {
 	ServeHTTP(ResponseWriter, *Request)
@@ -11,11 +18,6 @@ type Handler interface {
 
 // HandlerFunc is an adapter to allow ordinary functions to be Handlers.
 type HandlerFunc func(ResponseWriter, *Request)
-
-// ServeHTTP calls the actual Handler function.
-func (h HandlerFunc) ServeHTTP(res ResponseWriter, req *Request) {
-	h(res, req)
-}
 
 // A ParamHandlerFunc can be registered to a Router using a parameter's name.
 // It gets invoked with the corresponding value extracted from the request's

@@ -15,7 +15,7 @@ import (
 type Router struct {
 	// Handles errors set on the ResponseWriter with .SetError(err), not found errors
 	// and recovered panics.
-	ErrorHandler func(ResponseWriter, *Request, error)
+	ErrorHandler ErrorHandlerFunc
 
 	// Defines how Routes treat the trailing slash in a path.
 	//
@@ -28,66 +28,62 @@ type Router struct {
 	routes        []*Route
 }
 
-// All registers the specified functions in the order of appearance for the given path for
+// All registers the specified HandlerFunc for the given path for
 // all http methods.
-func (r *Router) All(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).All(funcs...)
+func (r *Router) All(path string, fn HandlerFunc) *Router {
+	r.Route(path).All(fn)
 	return r
 }
 
-// Method registers the specified functions in the order of appearance for the given path
+// Method registers the specified HandlerFunc for the given path
 // and method.
-func (r *Router) Method(method, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).Method(method, funcs...)
+func (r *Router) Method(method, path string, fn HandlerFunc) *Router {
+	r.Route(path).Method(method, fn)
 	return r
 }
 
-// Methods is an adapter for Method for registering functions on a path for multiple methods
+// Methods is an adapter for Method for registering a HandlerFunc on a path for multiple methods
 // in a single call.
-func (r *Router) Methods(methods []string, path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route(path).Methods(methods, funcs...)
+func (r *Router) Methods(methods []string, path string, fn HandlerFunc) *Router {
+	r.Route(path).Methods(methods, fn)
 	return r
 }
 
-// Get is an adapter for Method registering the functions for the "GET" method on path.
-func (r *Router) Get(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.Method(http.MethodGet, path, funcs...)
+// Get is an adapter for Method registering a HandlerFunc for the "GET" method on path.
+func (r *Router) Get(path string, fn HandlerFunc) *Router {
+	return r.Method(http.MethodGet, path, fn)
 }
 
-// Post is an adapter for Method registering the functions for the "POST" method on path.
-func (r *Router) Post(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.Method(http.MethodPost, path, funcs...)
+// Post is an adapter for Method registering a HandlerFunc for the "POST" method on path.
+func (r *Router) Post(path string, fn HandlerFunc) *Router {
+	return r.Method(http.MethodPost, path, fn)
 }
 
-// Put is an adapter for Method registering the functions for the "PUT" method on path.
-func (r *Router) Put(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.Method(http.MethodPut, path, funcs...)
+// Put is an adapter for Method registering a HandlerFunc for the "PUT" method on path.
+func (r *Router) Put(path string, fn HandlerFunc) *Router {
+	return r.Method(http.MethodPut, path, fn)
 }
 
-// Delete is an adapter for Method registering the functions for the "DELETE" method on path.
-func (r *Router) Delete(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.Method(http.MethodDelete, path, funcs...)
+// Delete is an adapter for Method registering a HandlerFunc for the "DELETE" method on path.
+func (r *Router) Delete(path string, fn HandlerFunc) *Router {
+	return r.Method(http.MethodDelete, path, fn)
 }
 
-// Patch is an adapter for Method registering the functions for the "PATCH" method on path.
-func (r *Router) Patch(path string, funcs ...func(ResponseWriter, *Request)) *Router {
-	return r.Method(http.MethodPatch, path, funcs...)
+// Patch is an adapter for Method registering a HandlerFunc for the "PATCH" method on path.
+func (r *Router) Patch(path string, fn HandlerFunc) *Router {
+	return r.Method(http.MethodPatch, path, fn)
 }
 
-// Use registers the specified functions in the order of appearance as middleware.
+// Use registers the specified function as middleware.
 // Middleware is always processed before any dispatching happens.
-func (r *Router) Use(funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route("/*").All(funcs...)
+func (r *Router) Use(fn HandlerFunc) *Router {
+	r.Route("/*").All(fn)
 	return r
 }
 
-// UseHandler is an adapter for Use to register handlers as middleware.
-func (r *Router) UseHandler(handlers ...Handler) *Router {
-	route := r.Route("/*")
-	for _, handler := range handlers {
-		route.All(handler.ServeHTTP)
-	}
-
+// UseHandler is an adapter for Use to register a Handler as middleware.
+func (r *Router) UseHandler(handler Handler) *Router {
+	r.Route("/*").All(handler.ServeHTTP)
 	return r
 }
 
@@ -96,7 +92,7 @@ func (r *Router) UseHandler(handlers ...Handler) *Router {
 // Parameter handlers are invoked with the extracted value before any route is processed.
 // All handlers are only invoked once per request, even though the request may be dispatched
 // to multiple routes.
-func (r *Router) Param(name string, fn func(ResponseWriter, *Request, string)) *Router {
+func (r *Router) Param(name string, fn ParamHandlerFunc) *Router {
 	r.paramHandlers[name] = append(r.paramHandlers[name], fn)
 	return r
 }
