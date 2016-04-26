@@ -5,6 +5,8 @@
 // Package goserv provides a fast, easy and minimalistic framework for
 // web applications in Go.
 //
+//      goserv requires at least Go v1.6
+//
 // Getting Started
 //
 // Every goserv application starts with a single instance of goserv.Server. This
