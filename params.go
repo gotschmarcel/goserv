@@ -11,5 +11,3 @@ type Params map[string]string
 // Get retrieves the value for key and returns an empty string
 // if the key doesn't exist.
 func (p Params) Get(key string) string { return p[key] }
-
-type empty struct{}

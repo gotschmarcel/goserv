@@ -152,7 +152,7 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	path := req.sanitizedPath[len(r.path):] // Strip own prefix
 
-	paramInvokedMem := make(emptyKeyMap)
+	paramInvokedMem := make(map[string]bool)
 
 	for _, route := range r.routes {
 		if !route.match(path) {
@@ -176,10 +176,10 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	}
 }
 
-func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, invoked emptyKeyMap) bool {
+func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, invoked map[string]bool) bool {
 	// Call param handlers in the same order in which the parameters appear in the path.
 	for _, name := range orderedParams {
-		if _, ok := invoked[name]; ok {
+		if invoked[name] {
 			continue
 		}
 
@@ -197,7 +197,7 @@ func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []
 			}
 		}
 
-		invoked[name] = empty{}
+		invoked[name] = true
 	}
 
 	return true
@@ -213,4 +213,3 @@ func newRouter() *Router {
 }
 
 type paramHandlerMap map[string][]ParamHandlerFunc
-type emptyKeyMap map[string]empty
