@@ -22,9 +22,9 @@ func ExampleServer_simple() {
 	// requests.
 	server := goserv.NewServer()
 
-	server.UseFunc(func(res goserv.ResponseWriter, req *goserv.Request) {
+	server.Use(func(res goserv.ResponseWriter, req *goserv.Request) {
 		log.Printf("Access %s %s", req.Method, req.URL.String())
-	}).GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
+	}).Get("/", func(res goserv.ResponseWriter, req *goserv.Request) {
 		io.WriteString(res, "Home")
 	})
 
@@ -37,15 +37,15 @@ func ExampleServer_subrouter() {
 
 	apiRouter := server.SubRouter("/api")
 
-	apiRouter.GetFunc("/users", func(res goserv.ResponseWriter, req *goserv.Request) {
+	apiRouter.Get("/users", func(res goserv.ResponseWriter, req *goserv.Request) {
 		// ...
 	})
 
-	apiRouter.GetFunc("/users/:user_id", func(res goserv.ResponseWriter, req *goserv.Request) {
+	apiRouter.Get("/users/:user_id", func(res goserv.ResponseWriter, req *goserv.Request) {
 		// ...
 	})
 
-	apiRouter.ParamFunc("user_id", func(res goserv.ResponseWriter, req *goserv.Request, val string) {
+	apiRouter.Param("user_id", func(res goserv.ResponseWriter, req *goserv.Request, val string) {
 		// ...
 	})
 
@@ -76,7 +76,7 @@ func ExampleServer_templates() {
 	server.TemplateEngine = goserv.NewStdTemplateEngine(".tpl", true /* enable caches */)
 	server.TemplateRoot = "views" // Relative folder
 
-	server.GetFunc("/", func(res goserv.ResponseWriter, req *goserv.Request) {
+	server.Get("/", func(res goserv.ResponseWriter, req *goserv.Request) {
 		res.Render("home", &struct{ Title string }{Title: "Home"})
 	})
 

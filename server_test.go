@@ -17,14 +17,14 @@ func TestRecovery(t *testing.T) {
 	server.PanicRecovery = true
 	expectedErr := "Panic: template engine not set"
 
-	server.GetFunc("/", func(res ResponseWriter, req *Request) {
+	server.Get("/", func(res ResponseWriter, req *Request) {
 		res.Render("none", nil)
 	})
 
 	var err error
-	server.ErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, e error) {
+	server.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
 		err = e
-	})
+	}
 
 	r, _ := http.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
@@ -93,7 +93,7 @@ func TestRenderer(t *testing.T) {
 	server.TemplateEngine.(*stdTemplateEngine).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
 
 	// Setup route
-	server.GetFunc("/myfile", func(res ResponseWriter, req *Request) {
+	server.Get("/myfile", func(res ResponseWriter, req *Request) {
 		res.Render("my", locals)
 	})
 

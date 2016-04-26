@@ -108,7 +108,7 @@ func (s *Server) renderView(w io.Writer, name string, locals interface{}) error 
 
 func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 	if r := recover(); r != nil {
-		s.ErrorHandler.ServeHTTP(res, req, fmt.Errorf("Panic: %v", r))
+		s.ErrorHandler(res, req, fmt.Errorf("Panic: %v", r))
 	}
 }
 

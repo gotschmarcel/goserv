@@ -23,7 +23,7 @@ var methodNames = []string{
 }
 
 // WrapHTTPHandler wraps a native http.Handler in a Handler.
-func WrapHTTPHandler(handler http.Handler) Handler {
+func WrapHTTPHandler(handler http.Handler) HandlerFunc {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		handler.ServeHTTP(res, req.Request)
 	})
@@ -31,7 +31,7 @@ func WrapHTTPHandler(handler http.Handler) Handler {
 
 // WrapHTTPHandlerFunc wraps ordinary functions with the http.HandlerFunc
 // format in a Handler.
-func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) Handler {
+func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) HandlerFunc {
 	return HandlerFunc(func(res ResponseWriter, req *Request) {
 		fn(res, req.Request)
 	})

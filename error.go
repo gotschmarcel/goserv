@@ -21,7 +21,7 @@ var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
 // All errors, except ErrNotFound, passed to it result in an internal server error (500) including
 // the message in the response body. The ErrNotFound error results
 // in a "not found" (404) response.
-var StdErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, err error) {
+var StdErrorHandler = func(res ResponseWriter, req *Request, err error) {
 	status := http.StatusInternalServerError
 
 	if err == ErrNotFound {
@@ -30,4 +30,4 @@ var StdErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, er
 
 	res.WriteHeader(status)
 	fmt.Fprintf(res, err.Error())
-})
+}

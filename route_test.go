@@ -18,24 +18,24 @@ func TestRouteHandlerChain(t *testing.T) {
 
 	route := newRoute("/", false, false)
 
-	route.AllFunc(func(ResponseWriter, *Request) {
+	route.All(func(ResponseWriter, *Request) {
 		history.WriteString("1")
 	})
 
-	route.AllFunc(func(ResponseWriter, *Request) {
+	route.All(func(ResponseWriter, *Request) {
 		history.WriteString("2")
 	})
 
-	route.MethodFunc(http.MethodGet, func(ResponseWriter, *Request) {
+	route.Get(func(ResponseWriter, *Request) {
 		history.WriteString("3")
 		res.Write([]byte("Done"))
 	})
 
-	route.MethodFunc(http.MethodGet, func(ResponseWriter, *Request) {
+	route.Get(func(ResponseWriter, *Request) {
 		history.WriteString("4")
 	})
 
-	route.MethodFunc(http.MethodPut, func(ResponseWriter, *Request) {
+	route.Put(func(ResponseWriter, *Request) {
 		history.WriteString("5")
 	})
 

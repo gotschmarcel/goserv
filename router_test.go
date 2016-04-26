@@ -16,26 +16,26 @@ type historyHandler struct {
 	*historyWriter
 }
 
-func (h historyHandler) Handler(id string) Handler {
+func (h historyHandler) Handler(id string) HandlerFunc {
 	return HandlerFunc(func(ResponseWriter, *Request) {
 		h.WriteString(id)
 	})
 }
 
-func (h historyHandler) WriteHandler(id string) Handler {
+func (h historyHandler) WriteHandler(id string) HandlerFunc {
 	return HandlerFunc(func(w ResponseWriter, r *Request) {
 		h.WriteString(id)
 		w.Write([]byte(id))
 	})
 }
 
-func (h historyHandler) ParamHandler() ParamHandler {
+func (h historyHandler) ParamHandler() ParamHandlerFunc {
 	return ParamHandlerFunc(func(w ResponseWriter, r *Request, value string) {
 		h.WriteString(value)
 	})
 }
 
-func (h historyHandler) HandlerWithError(v string) Handler {
+func (h historyHandler) HandlerWithError(v string) HandlerFunc {
 	return HandlerFunc(func(w ResponseWriter, r *Request) {
 		w.SetError(fmt.Errorf(v))
 	})
@@ -106,9 +106,9 @@ func TestRouter(t *testing.T) {
 		r.URL, _ = url.Parse(test.path)
 		h.Clear()
 
-		router.ErrorHandler = ErrorHandlerFunc(func(res ResponseWriter, req *Request, e error) {
+		router.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
 			err = e
-		})
+		}
 
 		router.ServeHTTP(newResponseWriter(w, nil), newRequest(r))
 
