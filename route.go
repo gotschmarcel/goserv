@@ -126,7 +126,7 @@ func (r *Route) PatchFunc(funcs ...func(ResponseWriter, *Request)) *Route {
 // The processing stops as soon as a handler writes a response or set's an error
 // on the ResponseWriter.
 func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
-	if r.ContainsParams() && len(req.Params) == 0 {
+	if r.containsParams() && len(req.Params) == 0 {
 		r.fillParams(req)
 	}
 
@@ -143,13 +143,11 @@ func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
 	}
 }
 
-// Match returns true if the given path fulfills the routes matching pattern.
-func (r *Route) Match(path string) bool {
+func (r *Route) match(path string) bool {
 	return r.path.Match(path)
 }
 
-// ContainsParams returns true if the route has any parameters registered.
-func (r *Route) ContainsParams() bool {
+func (r *Route) containsParams() bool {
 	return r.path.ContainsParams()
 }
 

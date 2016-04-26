@@ -85,7 +85,7 @@ func (p *path) FillParams(req *Request) {
 		return
 	}
 
-	matches := p.params.FindAllStringSubmatch(req.SanitizedPath, -1)
+	matches := p.params.FindAllStringSubmatch(req.sanitizedPath, -1)
 	if len(matches) == 0 {
 		return
 	}

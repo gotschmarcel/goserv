@@ -26,8 +26,7 @@ type Request struct {
 	// the Request's path. See Route.
 	Params Params
 
-	// Sanitized http.Request.URL.Path
-	SanitizedPath string
+	sanitizedPath string
 }
 
 // ReadJSON parses the request's body using the encoding/json Decoder. In case
