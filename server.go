@@ -59,6 +59,7 @@ func (s *Server) Listen(addr string) error {
 }
 
 // ListenTLS is a convenience method that uses http.ListenAndServeTLS.
+// The TLS informations used are stored in .TLS after calling this method.
 func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 	s.TLS = &TLS{certFile, keyFile}
 	return http.ListenAndServeTLS(addr, certFile, keyFile, s)
