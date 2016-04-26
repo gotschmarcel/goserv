@@ -6,7 +6,7 @@ package goserv
 
 import (
 	"net/http"
-	"path"
+	gopath "path"
 	"strings"
 )
 
@@ -51,7 +51,7 @@ func SanitizePath(p string) string {
 	}
 
 	trailingSlash := strings.HasSuffix(p, "/")
-	p = path.Clean(p)
+	p = gopath.Clean(p)
 
 	if p != "/" && trailingSlash {
 		p += "/"

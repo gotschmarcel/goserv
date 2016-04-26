@@ -135,13 +135,13 @@ func (r *Router) ParamFunc(name string, fn func(ResponseWriter, *Request, string
 // Use registers the specified handlers in the order of appearance as middleware.
 // Middleware is always processed before any dispatching happens.
 func (r *Router) Use(handlers ...Handler) *Router {
-	r.Route("*").All(handlers...)
+	r.Route("/*").All(handlers...)
 	return r
 }
 
 // UseFunc is an adapter for Use registering ordinary functions as middleware.
 func (r *Router) UseFunc(funcs ...func(ResponseWriter, *Request)) *Router {
-	r.Route("*").AllFunc(funcs...)
+	r.Route("/*").AllFunc(funcs...)
 	return r
 }
 
@@ -204,7 +204,7 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 		}
 
 		route.fillParams(req)
-		if !r.handleParams(res, req, route.params, paramInvokedMem) {
+		if !r.handleParams(res, req, route.params(), paramInvokedMem) {
 			return
 		}
 

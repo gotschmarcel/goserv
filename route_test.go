@@ -16,7 +16,7 @@ func TestRouteHandlerChain(t *testing.T) {
 	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, "/"}
 	history := &historyWriter{}
 
-	route := newRoute("", false, false)
+	route := newRoute("/", false, false)
 
 	route.AllFunc(func(ResponseWriter, *Request) {
 		history.WriteString("1")

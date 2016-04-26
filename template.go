@@ -7,7 +7,7 @@ package goserv
 import (
 	"html/template"
 	"io"
-	"path"
+	gopath "path"
 	"sync"
 )
 
@@ -38,7 +38,7 @@ func (s *stdTemplateEngine) RenderAndWrite(w io.Writer, filePath string, locals 
 		return err
 	}
 
-	return tpl.ExecuteTemplate(w, path.Base(filePath), locals)
+	return tpl.ExecuteTemplate(w, gopath.Base(filePath), locals)
 }
 
 func (s *stdTemplateEngine) Ext() string {
@@ -53,7 +53,7 @@ func (s *stdTemplateEngine) template(filePath string) (*template.Template, error
 	s.tplMutex.Lock()
 	defer s.tplMutex.Unlock()
 
-	tpl := s.tpl.Lookup(path.Base(filePath))
+	tpl := s.tpl.Lookup(gopath.Base(filePath))
 	if tpl == nil {
 		tpl, err := s.tpl.ParseFiles(filePath)
 		return tpl, err

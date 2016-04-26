@@ -6,7 +6,6 @@ package goserv
 
 import (
 	"net/http"
-	"regexp"
 )
 
 // A Route handles requests by processing method handlers.
@@ -15,8 +14,7 @@ import (
 //	route.All(middleware).Get(getHandler).Put(putHandler)
 type Route struct {
 	methods map[string][]Handler
-	matcher *regexp.Regexp
-	params  []string
+	path    *path
 }
 
 // All registers the specified handlers for all methods in the order of appearance.
@@ -147,34 +145,20 @@ func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
 
 // Match returns true if the given path fulfills the routes matching pattern.
 func (r *Route) Match(path string) bool {
-	return r.matcher.MatchString(path)
+	return r.path.Match(path)
 }
 
 // ContainsParams returns true if the route has any parameters registered.
 func (r *Route) ContainsParams() bool {
-	return len(r.params) > 0
+	return r.path.ContainsParams()
 }
 
-// Params returns a list containing the names of all registered parameters.
-func (r *Route) Params() []string {
-	return append([]string{}, r.params...) // return a copy
+func (r *Route) params() []string {
+	return r.path.Params()
 }
 
 func (r *Route) fillParams(req *Request) {
-	if !r.ContainsParams() {
-		return
-	}
-
-	matches := r.matcher.FindAllStringSubmatch(req.SanitizedPath, -1)
-	if len(matches) == 0 {
-		return
-	}
-
-	// Iterate group matches only
-	for index, value := range matches[0][1:] {
-		name := r.params[index]
-		req.Params[name] = value
-	}
+	r.path.FillParams(req)
 }
 
 func (r *Route) addMethodHandlers(method string, handlers ...Handler) {
@@ -182,11 +166,14 @@ func (r *Route) addMethodHandlers(method string, handlers ...Handler) {
 }
 
 func newRoute(pattern string, strict, prefixOnly bool) *Route {
-	matcher, params := pathComponents(pattern, strict, prefixOnly)
+	path, err := parsePath(pattern, strict, prefixOnly)
+
+	if err != nil {
+		panic(err)
+	}
 
 	return &Route{
 		methods: make(map[string][]Handler),
-		matcher: matcher,
-		params:  params,
+		path:    path,
 	}
 }

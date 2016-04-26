@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path"
+	gopath "path"
 )
 
 // A TLS contains both the certificate and key file paths.
@@ -102,7 +102,7 @@ func (s *Server) renderView(w io.Writer, name string, locals interface{}) error 
 		panic("template engine not set")
 	}
 
-	filePath := path.Join(s.TemplateRoot, name) + s.TemplateEngine.Ext()
+	filePath := gopath.Join(s.TemplateRoot, name) + s.TemplateEngine.Ext()
 	return s.TemplateEngine.RenderAndWrite(w, filePath, locals)
 }
 
