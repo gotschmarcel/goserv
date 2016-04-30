@@ -31,27 +31,6 @@ func ExampleServer_simple() {
 	log.Fatalln(server.Listen(":12345"))
 }
 
-func ExampleServer_subrouter() {
-	// Example server with API sub router:
-	server := goserv.NewServer()
-
-	apiRouter := server.SubRouter("/api")
-
-	apiRouter.Get("/users", func(w http.ResponseWriter, r *http.Request) {
-		// ...
-	})
-
-	apiRouter.Get("/users/:user_id", func(w http.ResponseWriter, r *http.Request) {
-		// ...
-	})
-
-	apiRouter.Param("user_id", func(w http.ResponseWriter, r *http.Request, val string) {
-		// ...
-	})
-
-	log.Fatalln(server.Listen(":8080"))
-}
-
 func ExampleServer_static() {
 	// Example file server:
 	server := goserv.NewServer()
