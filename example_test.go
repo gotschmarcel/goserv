@@ -56,6 +56,69 @@ func ExampleServer_static() {
 	// Example file server:
 	server := goserv.NewServer()
 
-	server.SubRouter("/").UseHandler(goserv.FileServer("/usr/share/doc", "/", ""))
+	server.SubRouter("/").UseHandler(goserv.FileServer("/home/myfile", "/", "index.html"))
+	log.Fatalln(server.Listen(":12345"))
+}
+
+func ExampleServer_context() {
+	// Share data between handlers:
+	//
+	// The middleware stores a shared value in the RequestContext under the name "shared".
+	// The GET handler is the next handler in line and retrieves the value from the
+	// context. Since a RequestContext can store arbitrary types a type assertion
+	// is necessary to get the value in it's real type.
+	server := goserv.NewServer()
+
+	server.Use(func(w http.ResponseWriter, r *http.Request) {
+		goserv.Context(r).Set("shared", "something to share")
+	})
+
+	server.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		shared := goserv.Context(r).Get("shared").(string)
+		goserv.WriteString(w, shared)
+	})
+
+	log.Fatalln(server.Listen(":12345"))
+}
+
+func ExampleServer_json() {
+	// Example server showing how to read and write JSON body:
+	//
+	// Since WriteJSON and ReadJSONBody are based on the encoding/json
+	// package of the standard library the usage is very similar.
+	// One thing to notice is that occuring errors are passed to
+	// the RequestContext which stops further processing and passes
+	// the error to the server's error handler.
+	server := goserv.NewServer()
+
+	// Send a simple JSON response.
+	server.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		// JSON data to send.
+		data := &struct{ Title string }{"My First Todo"}
+
+		// Try to write the data.
+		// In case of an error pass it to the RequestContext
+		// so it gets forwarded to the next error handler.
+		if err := goserv.WriteJSON(w, data); err != nil {
+			goserv.Context(r).Error(err, http.StatusInternalServerError)
+			return
+		}
+	})
+
+	// Handle send JSON data.
+	server.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		var data struct{ Title string }
+
+		// Read and decode the request's body.
+		// In case of an error pass it to the RequestContext
+		// so it gets forwarded to the next error handler.
+		if err := goserv.ReadJSONBody(r, &data); err != nil {
+			goserv.Context(r).Error(err, http.StatusBadRequest)
+			return
+		}
+
+		log.Println(data)
+	})
+
 	log.Fatalln(server.Listen(":12345"))
 }
