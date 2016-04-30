@@ -5,6 +5,7 @@
 package goserv
 
 import (
+	"fmt"
 	"net/http"
 )
 
@@ -22,6 +23,9 @@ type Router struct {
 	// When enabled routes with a trailing slash are considered to be different routes
 	// than routes without a trailing slash.
 	StrictSlash bool
+
+	// Enables/Disables panic recovery
+	PanicRecovery bool
 
 	path          string
 	paramHandlers paramHandlerMap
@@ -128,6 +132,10 @@ func (r *Router) Path() string {
 }
 
 func (r *Router) serveHTTP(res http.ResponseWriter, req *http.Request) {
+	if r.PanicRecovery {
+		defer r.handleRecovery(res, req)
+	}
+
 	ctx := Context(req)
 
 	r.invokeHandlers(res, req, ctx)
@@ -178,6 +186,12 @@ func (r *Router) invokeHandlers(res http.ResponseWriter, req *http.Request, ctx 
 		if doneProcessing(res.(*responseWriter), ctx) {
 			return
 		}
+	}
+}
+
+func (r *Router) handleRecovery(res http.ResponseWriter, req *http.Request) {
+	if err := recover(); err != nil {
+		r.ErrorHandler(res, req, &ContextError{fmt.Errorf("Panic: %v", err), http.StatusInternalServerError})
 	}
 }
 

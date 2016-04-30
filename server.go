@@ -5,7 +5,6 @@
 package goserv
 
 import (
-	"fmt"
 	"net/http"
 )
 
@@ -34,9 +33,6 @@ type Server struct {
 
 	// TLS information set by .ListenTLS or nil if .Listen was used
 	TLS *TLS
-
-	// Enables/Disables panic recovery
-	PanicRecovery bool
 }
 
 // Listen is a convenience method that uses http.ListenAndServe.
@@ -56,11 +52,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	iw := newResponseWriter(w)
 	createRequestContext(r)
 
-	if s.PanicRecovery {
-		defer s.handleRecovery(iw, r)
-	}
-
-	s.Router.serveHTTP(iw, r)
+	s.serveHTTP(iw, r)
 }
 
 // Static registers a http.FileServer for the specified directory under the given
@@ -84,22 +76,15 @@ func (s *Server) Static(prefix string, dir http.Dir) {
 	s.All(prefix+"*", http.StripPrefix(prefix, http.FileServer(dir)).ServeHTTP)
 }
 
-func (s *Server) handleRecovery(w http.ResponseWriter, r *http.Request) {
-	if err := recover(); err != nil {
-		s.ErrorHandler(w, r, &ContextError{fmt.Errorf("Panic: %v", err), http.StatusInternalServerError})
-	}
-}
-
 // NewServer returns a newly allocated and initialized Server instance.
 //
 // By default the Server has no template engine, the template root is "" and
 // panic recovery is disabled. The Router's ErrorHandler is set to the StdErrorHandler.
 func NewServer() *Server {
 	s := &Server{
-		Router:        newRouter(),
-		Addr:          "",
-		TLS:           nil,
-		PanicRecovery: false,
+		Router: newRouter(),
+		Addr:   "",
+		TLS:    nil,
 	}
 
 	s.ErrorHandler = StdErrorHandler
