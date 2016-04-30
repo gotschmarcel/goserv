@@ -21,9 +21,9 @@ var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
 // All errors, except ErrNotFound, passed to it result in an internal server error (500) including
 // the message in the response body. The ErrNotFound error results
 // in a "not found" (404) response.
-var StdErrorHandler = func(res ResponseWriter, req *Request, err *ContextError) {
-	res.WriteHeader(err.Code)
-	fmt.Fprintf(res, err.Error())
+var StdErrorHandler = func(w http.ResponseWriter, r *http.Request, err *ContextError) {
+	w.WriteHeader(err.Code)
+	fmt.Fprintf(w, err.Error())
 }
 
 // A ContextError stores an error along with a response code usually in the range

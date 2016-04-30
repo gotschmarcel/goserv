@@ -12,39 +12,6 @@ import (
 	"testing"
 )
 
-type historyHandler struct {
-	*historyWriter
-}
-
-func (h historyHandler) Handler(id string) HandlerFunc {
-	return HandlerFunc(func(ResponseWriter, *Request) {
-		h.WriteString(id)
-	})
-}
-
-func (h historyHandler) WriteHandler(id string) HandlerFunc {
-	return HandlerFunc(func(w ResponseWriter, r *Request) {
-		h.WriteString(id)
-		w.Write([]byte(id))
-	})
-}
-
-func (h historyHandler) ParamHandler() ParamHandlerFunc {
-	return ParamHandlerFunc(func(w ResponseWriter, r *Request, value string) {
-		h.WriteString(value)
-	})
-}
-
-func (h historyHandler) HandlerWithError(v string) HandlerFunc {
-	return HandlerFunc(func(w ResponseWriter, r *Request) {
-		Context(r).Error(fmt.Errorf(v), 500)
-	})
-}
-
-func newHistoryHandler() *historyHandler {
-	return &historyHandler{&historyWriter{}}
-}
-
 func TestRouter(t *testing.T) {
 	h := newHistoryHandler()
 
@@ -106,13 +73,12 @@ func TestRouter(t *testing.T) {
 		r.URL, _ = url.Parse(test.path)
 		h.Clear()
 
-		router.ErrorHandler = func(res ResponseWriter, req *Request, e *ContextError) {
+		router.ErrorHandler = func(w http.ResponseWriter, r *http.Request, e *ContextError) {
 			err = e.Err
 		}
 
-		req := newRequest(r)
-		createRequestContext(req)
-		router.ServeHTTP(newResponseWriter(w), req)
+		createRequestContext(r)
+		router.serveHTTP(newResponseWriter(w), r)
 
 		if test.err != nil {
 			if err == nil {

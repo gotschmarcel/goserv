@@ -53,16 +53,14 @@ func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 
 // ServeHTTP dispatches the request to the internal Router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	res := newResponseWriter(w)
-	req := newRequest(r)
-
-	createRequestContext(req)
+	iw := newResponseWriter(w)
+	createRequestContext(r)
 
 	if s.PanicRecovery {
-		defer s.handleRecovery(res, req)
+		defer s.handleRecovery(iw, r)
 	}
 
-	s.Router.ServeHTTP(res, req)
+	s.Router.serveHTTP(iw, r)
 }
 
 // Static registers a http.FileServer for the specified directory under the given
@@ -83,12 +81,12 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //	}
 //
 func (s *Server) Static(prefix string, dir http.Dir) {
-	s.All(prefix+"*", WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
+	s.All(prefix+"*", http.StripPrefix(prefix, http.FileServer(dir)).ServeHTTP)
 }
 
-func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
-	if r := recover(); r != nil {
-		s.ErrorHandler(res, req, &ContextError{fmt.Errorf("Panic: %v", r), http.StatusInternalServerError})
+func (s *Server) handleRecovery(w http.ResponseWriter, r *http.Request) {
+	if err := recover(); err != nil {
+		s.ErrorHandler(w, r, &ContextError{fmt.Errorf("Panic: %v", err), http.StatusInternalServerError})
 	}
 }
 

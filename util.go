@@ -24,21 +24,6 @@ var methodNames = []string{
 	http.MethodTrace,
 }
 
-// WrapHTTPHandler wraps a native http.Handler in a Handler.
-func WrapHTTPHandler(handler http.Handler) HandlerFunc {
-	return HandlerFunc(func(res ResponseWriter, req *Request) {
-		handler.ServeHTTP(res, req.Request)
-	})
-}
-
-// WrapHTTPHandlerFunc wraps ordinary functions with the http.HandlerFunc
-// format in a Handler.
-func WrapHTTPHandlerFunc(fn func(w http.ResponseWriter, r *http.Request)) HandlerFunc {
-	return HandlerFunc(func(res ResponseWriter, req *Request) {
-		fn(res, req.Request)
-	})
-}
-
 // SanitizePath returns the clean version of the specified path.
 //
 // It prepends a "/" to the path if none was found, uses path.Clean to resolve
@@ -65,7 +50,7 @@ func SanitizePath(p string) string {
 // WriteJSON writes the passed value as JSON to the ResponseWriter utilizing the
 // encoding/json package. It also sets the Content-Type header to "application/json".
 // Any errors occured during encoding are returned.
-func WriteJSON(w ResponseWriter, v interface{}) error {
+func WriteJSON(w http.ResponseWriter, v interface{}) error {
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(v); err != nil {
@@ -78,7 +63,7 @@ func WriteJSON(w ResponseWriter, v interface{}) error {
 // WriteString writes the s to the ResponseWriter utilizing io.WriteString. It also
 // sets the Content-Type to "text/plain; charset=utf8".
 // Any errors occured during Write are returned.
-func WriteString(w ResponseWriter, s string) error {
+func WriteString(w http.ResponseWriter, s string) error {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
 	if _, err := io.WriteString(w, s); err != nil {
@@ -90,7 +75,7 @@ func WriteString(w ResponseWriter, s string) error {
 
 // ReadJSONBody decodes the request's body utilizing encoding/json. The body
 // is closed after the decoding and any errors occured are returned.
-func ReadJSONBody(r *Request, result interface{}) error {
+func ReadJSONBody(r *http.Request, result interface{}) error {
 	err := json.NewDecoder(r.Body).Decode(result)
 	r.Body.Close()
 
@@ -102,6 +87,6 @@ func ReadJSONBody(r *Request, result interface{}) error {
 }
 
 // Returns true if either a response was written or a ContextError occured.
-func doneProcessing(w ResponseWriter, ctx *RequestContext) bool {
+func doneProcessing(w *responseWriter, ctx *RequestContext) bool {
 	return w.Written() || ctx.err != nil
 }

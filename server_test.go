@@ -16,12 +16,12 @@ func TestRecovery(t *testing.T) {
 	server.PanicRecovery = true
 	expectedErr := "Panic: I am panicked"
 
-	server.Get("/", func(res ResponseWriter, req *Request) {
+	server.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		panic("I am panicked")
 	})
 
 	var err error
-	server.ErrorHandler = func(res ResponseWriter, req *Request, e *ContextError) {
+	server.ErrorHandler = func(w http.ResponseWriter, r *http.Request, e *ContextError) {
 		err = e.Err
 	}
 
@@ -85,13 +85,13 @@ func TestStatic(t *testing.T) {
 func TestServerContext(t *testing.T) {
 	server := NewServer()
 
-	server.Use(func(res ResponseWriter, req *Request) {
-		ctx := Context(req)
+	server.Use(func(w http.ResponseWriter, r *http.Request) {
+		ctx := Context(r)
 		ctx.Set("test_key", "test_value")
 	})
 
-	server.Use(func(res ResponseWriter, req *Request) {
-		ctx := Context(req)
+	server.Use(func(w http.ResponseWriter, r *http.Request) {
+		ctx := Context(r)
 
 		if !ctx.Exists("test_key") {
 			t.Fatal("Missing key: test_key")

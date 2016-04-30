@@ -217,8 +217,7 @@ func TestPathComponents(t *testing.T) {
 
 		// Test Params
 		if len(test.Params) > 0 {
-			goreq, _ := http.NewRequest(http.MethodGet, test.TestPath, nil)
-			req := newRequest(goreq)
+			req, _ := http.NewRequest(http.MethodGet, test.TestPath, nil)
 
 			if !path.ContainsParams() {
 				t.Error("Expected path to have params")
@@ -226,7 +225,7 @@ func TestPathComponents(t *testing.T) {
 			}
 
 			params := make(params)
-			path.FillParams(req.sanitizedPath, params)
+			path.FillParams(req.URL.Path, params)
 
 			for name, testValue := range test.Params {
 				value, ok := params[name]

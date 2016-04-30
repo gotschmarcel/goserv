@@ -4,20 +4,14 @@
 
 package goserv
 
+import "net/http"
+
 // A ErrorHandlerFunc is the last handler in the request chain and
 // is responsible for handling errors that occur during the
 // request processing.
 //
 // A ErrorHandlerFunc should always write a response!
-type ErrorHandlerFunc func(ResponseWriter, *Request, *ContextError)
-
-// A Handler processes an HTTP request and may respond to it.
-type Handler interface {
-	ServeHTTP(ResponseWriter, *Request)
-}
-
-// HandlerFunc is an adapter to allow ordinary functions to be Handlers.
-type HandlerFunc func(ResponseWriter, *Request)
+type ErrorHandlerFunc func(http.ResponseWriter, *http.Request, *ContextError)
 
 // A ParamHandlerFunc can be registered to a Router using a parameter's name.
 // It gets invoked with the corresponding value extracted from the request's
@@ -25,4 +19,4 @@ type HandlerFunc func(ResponseWriter, *Request)
 //
 // Parameters are part of a Route's path. To learn more about parameters take
 // a look at the documentation of Route.
-type ParamHandlerFunc func(ResponseWriter, *Request, string)
+type ParamHandlerFunc func(http.ResponseWriter, *http.Request, string)
