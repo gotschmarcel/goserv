@@ -5,7 +5,6 @@
 package goserv
 
 import (
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,10 +14,10 @@ import (
 func TestRecovery(t *testing.T) {
 	server := NewServer()
 	server.PanicRecovery = true
-	expectedErr := "Panic: template engine not set"
+	expectedErr := "Panic: I am panicked"
 
 	server.Get("/", func(res ResponseWriter, req *Request) {
-		res.Render("none", nil)
+		panic("I am panicked")
 	})
 
 	var err error
@@ -80,34 +79,6 @@ func TestStatic(t *testing.T) {
 		if test.code == http.StatusOK && w.Body.Len() == 0 {
 			t.Errorf("Expected non-empty body (test no. %d)", idx)
 		}
-	}
-}
-
-func TestRenderer(t *testing.T) {
-	server := NewServer()
-	locals := &struct{ Title string }{"MyTitle"}
-
-	// Setup renderer with initial template cache
-	server.TemplateRoot = "/views"
-	server.TemplateEngine = NewStdTemplateEngine(".tpl", true)
-	server.TemplateEngine.(*stdTemplateEngine).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
-
-	// Setup route
-	server.Get("/myfile", func(res ResponseWriter, req *Request) {
-		res.Render("my", locals)
-	})
-
-	r, _ := http.NewRequest(http.MethodGet, "/myfile", nil)
-	w := httptest.NewRecorder()
-
-	server.ServeHTTP(w, r)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status OK (200), not %s (%d)", http.StatusText(w.Code), w.Code)
-	}
-
-	if content := w.Body.String(); content != "MyTitle" {
-		t.Errorf("Expected content to be 'MyTitle' not '%s'", content)
 	}
 }
 

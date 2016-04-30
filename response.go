@@ -38,13 +38,6 @@ type ResponseWriter interface {
 	// by the Server/Router.
 	SetError(error)
 
-	// Render renders the template with the given name and locals.
-	// The result is written to the body.
-	//
-	// Render works only if a TemplateEngine is registered to the
-	// main Server and results in a panic otherwise.
-	Render(string, interface{})
-
 	// WriteJSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
 	WriteJSON(interface{})
 
@@ -58,7 +51,6 @@ type ResponseWriter interface {
 
 type responseWriter struct {
 	w      http.ResponseWriter
-	s      *Server
 	status int
 	err    error
 }
@@ -100,12 +92,6 @@ func (r *responseWriter) SetError(err error) {
 	r.err = err
 }
 
-func (r *responseWriter) Render(name string, locals interface{}) {
-	if err := r.s.renderView(r, name, locals); err != nil {
-		r.SetError(err)
-	}
-}
-
 func (r *responseWriter) WriteJSON(v interface{}) {
 	r.w.Header().Set("Content-Type", "application/json")
 
@@ -124,6 +110,6 @@ func (r *responseWriter) Redirect(req *Request, url string, code int) {
 	http.Redirect(r, req.Request, url, code)
 }
 
-func newResponseWriter(w http.ResponseWriter, server *Server) ResponseWriter {
-	return &responseWriter{w: w, s: server}
+func newResponseWriter(w http.ResponseWriter) ResponseWriter {
+	return &responseWriter{w: w}
 }

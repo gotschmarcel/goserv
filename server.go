@@ -6,9 +6,7 @@ package goserv
 
 import (
 	"fmt"
-	"io"
 	"net/http"
-	gopath "path"
 )
 
 // A TLS contains both the certificate and key file paths.
@@ -27,12 +25,6 @@ type TLS struct {
 // http.ListenAndServe as well as http.ListenAndServeTLS and the possibility
 // to recover from panics.
 //
-// Also a TemplateRoot and TemplateEngine can be set, latter is then available
-// through ResponseWriter.Render. The actual file path given to the TemplateEngine
-// is build from the TemplateRoot, template name given to ResponseWriter.Render and
-// the file extension from TemplateEngine.Ext.
-//
-//	<Server.TemplateRoot>/<TemplateName><TemplateEngine.Ext()>
 type Server struct {
 	// Embedded Router
 	*Router
@@ -42,12 +34,6 @@ type Server struct {
 
 	// TLS information set by .ListenTLS or nil if .Listen was used
 	TLS *TLS
-
-	// TemplateRoot path to the folder containing template files
-	TemplateRoot string
-
-	// TemplateEngine to use when ResponseWriter.Render is called
-	TemplateEngine TemplateEngine
 
 	// Enables/Disables panic recovery
 	PanicRecovery bool
@@ -67,7 +53,7 @@ func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 
 // ServeHTTP dispatches the request to the internal Router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	res := newResponseWriter(w, s)
+	res := newResponseWriter(w)
 	req := newRequest(r)
 
 	createRequestContext(req)
@@ -100,15 +86,6 @@ func (s *Server) Static(prefix string, dir http.Dir) {
 	s.All(prefix+"*", WrapHTTPHandler(http.StripPrefix(prefix, http.FileServer(dir))))
 }
 
-func (s *Server) renderView(w io.Writer, name string, locals interface{}) error {
-	if s.TemplateEngine == nil {
-		panic("template engine not set")
-	}
-
-	filePath := gopath.Join(s.TemplateRoot, name) + s.TemplateEngine.Ext()
-	return s.TemplateEngine.RenderAndWrite(w, filePath, locals)
-}
-
 func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 	if r := recover(); r != nil {
 		s.ErrorHandler(res, req, fmt.Errorf("Panic: %v", r))
@@ -121,12 +98,10 @@ func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 // panic recovery is disabled. The Router's ErrorHandler is set to the StdErrorHandler.
 func NewServer() *Server {
 	s := &Server{
-		Router:         newRouter(),
-		Addr:           "",
-		TLS:            nil,
-		TemplateRoot:   "",
-		TemplateEngine: nil,
-		PanicRecovery:  false,
+		Router:        newRouter(),
+		Addr:          "",
+		TLS:           nil,
+		PanicRecovery: false,
 	}
 
 	s.ErrorHandler = StdErrorHandler

@@ -59,26 +59,3 @@ func ExampleServer_static() {
 	server.Static("/", "/usr/share/doc")
 	log.Fatalln(server.Listen(":12345"))
 }
-
-func ExampleServer_templates() {
-	// Example server rendering template files with Go's html/template package.
-	//
-	// The template files are placed inside the views folder in the current working
-	// directory. Inside of the views folder is a file called home.tpl with the following
-	// content:
-	//
-	//	<html>
-	//		<head><title>{{.Title}}</title></head>
-	//		<body>Welcome Home</body>
-	//	</html>
-	server := goserv.NewServer()
-
-	server.TemplateEngine = goserv.NewStdTemplateEngine(".tpl", true /* enable caches */)
-	server.TemplateRoot = "views" // Relative folder
-
-	server.Get("/", func(res goserv.ResponseWriter, req *goserv.Request) {
-		res.Render("home", &struct{ Title string }{Title: "Home"})
-	})
-
-	log.Fatalln(server.Listen(":12345"))
-}
