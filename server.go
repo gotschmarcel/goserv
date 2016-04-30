@@ -70,6 +70,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	res := newResponseWriter(w, s)
 	req := newRequest(r)
 
+	createRequestContext(req)
+
 	if s.PanicRecovery {
 		defer s.handleRecovery(res, req)
 	}

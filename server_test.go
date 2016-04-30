@@ -110,3 +110,24 @@ func TestRenderer(t *testing.T) {
 		t.Errorf("Expected content to be 'MyTitle' not '%s'", content)
 	}
 }
+
+func TestServerContext(t *testing.T) {
+	server := NewServer()
+
+	server.Use(func(res ResponseWriter, req *Request) {
+		ctx := RequestContext(req)
+		ctx.Set("test_key", "test_value")
+	})
+
+	server.Use(func(res ResponseWriter, req *Request) {
+		ctx := RequestContext(req)
+
+		if !ctx.Exists("test_key") {
+			t.Fatal("Missing key: test_key")
+		}
+
+		if v, ok := ctx.Get("test_key").(string); !ok || v != "test_value" {
+			t.Errorf("Wrong key value, wanted: %q, got: %q", "test_value", v)
+		}
+	})
+}

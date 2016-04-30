@@ -12,15 +12,11 @@ import (
 // A Request represents an HTTP request received by the Server.
 //
 // It embeds the native http.Request, thus all native fields are still available
-// through Request. Every Request has it's own Context providing a key-value store to share
-// data between multiple Handlers. In case that the Route handling the Request has parameters, the parameter
+// through Request. In case that the Route handling the Request has parameters, the parameter
 // values are extracted from the Request's path and stored in .Params.
 type Request struct {
 	// Embedded http.Request.
 	*http.Request
-
-	// Request specific key-value store to share data between Handlers
-	Context *Context
 
 	// Key-value store containing named parameter values extracted from
 	// the Request's path. See Route.
@@ -45,5 +41,5 @@ func (r *Request) ReadJSON(v interface{}) error {
 }
 
 func newRequest(r *http.Request) *Request {
-	return &Request{r, newContext(), make(Params), SanitizePath(r.URL.Path)}
+	return &Request{r, make(Params), SanitizePath(r.URL.Path)}
 }

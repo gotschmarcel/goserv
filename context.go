@@ -34,3 +34,17 @@ func (c *Context) Exists(key string) bool {
 func newContext() *Context {
 	return &Context{make(map[string]interface{})}
 }
+
+// Stores a Context for each Request.
+var requestContextMap = make(map[*Request]*Context)
+
+// RequestContext returns the corresponding Context for the given Request.
+func RequestContext(r *Request) *Context {
+	return requestContextMap[r]
+}
+
+// Stores a new Context for the specified Request in the requestContextMap.
+// This may overwrite an existing Context!
+func createRequestContext(r *Request) {
+	requestContextMap[r] = newContext()
+}
