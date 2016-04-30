@@ -107,8 +107,8 @@ func ExampleServer_parameters() {
 	// Use URL parameters:
 	//
 	// URL parameters can be specified by prefixing the name with a ":" in the handler path.
-	// The capture value can be retrieved from the RequestContext using the .Param method and
-	// the parameter' name.
+	// The captured value can be retrieved from the RequestContext using the .Param method and
+	// the parameter's name.
 	//
 	// Servers and Routers both support parameter handlers which can be added using the
 	// .Param method, i.e. server.Param(...). The first argument is the name of the parameter
@@ -117,11 +117,13 @@ func ExampleServer_parameters() {
 	//
 	server := goserv.NewServer()
 
+	// This route captures a single URL parameter named "resource_id".
 	server.Get("/resource/:resource_id", func(w http.ResponseWriter, r *http.Request) {
 		id := goserv.Context(r).Param("resource_id")
 		goserv.WriteStringf(w, "Requested resource: %s", id)
 	})
 
+	// Registers a parameter handler for the "resource_id" parameter.
 	server.Param("resource_id", func(w http.ResponseWriter, r *http.Request, id string) {
 		// Some sort of validation.
 		if len(id) < 12 {
@@ -131,6 +133,39 @@ func ExampleServer_parameters() {
 
 		log.Printf("Requesting resource: %s", id)
 	})
+
+	log.Fatalln(server.Listen(":12345"))
+}
+
+func ExampleServer_errorHandling() {
+	// Custom error handling:
+	//
+	// Every Router can have its own error handler. In this example
+	// a custom error handler is set on the API sub router to handler
+	// all errors occured on the /api route.
+	//
+	// Note: it is also possible to overwrite the default error handler of
+	// the server.
+	server := goserv.NewServer()
+
+	server.Get("/error", func(w http.ResponseWriter, r *http.Request) {
+		err := fmt.Errorf("a server error")
+		goserv.Context(r).Error(err, http.StatusInternalServerError)
+	})
+
+	api := server.SubRouter("/api")
+	api.Get("/error", func(w http.ResponseWriter, r *http.Request) {
+		err := fmt.Errorf("a API error")
+		goserv.Context(r).Error(err, http.StatusInternalServerError)
+	})
+
+	// Handle errors occured on the API router.
+	api.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err *goserv.ContextError) {
+		log.Printf("API Error: %s", err)
+
+		w.WriteHeader(err.Code)
+		goserv.WriteString(w, err.String())
+	}
 
 	log.Fatalln(server.Listen(":12345"))
 }
