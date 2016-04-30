@@ -69,16 +69,14 @@ func (r *Route) Patch(fn HandlerFunc) *Route {
 // corresponding method of the Request in the order they were registered.
 //
 // The processing stops as soon as a handler writes a response or set's an error
-// on the ResponseWriter.
+// on the RequestContext.
 func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
+	ctx := Context(req)
+
 	for _, handler := range r.methods[req.Method] {
 		handler(res, req)
 
-		if res.Error() != nil {
-			return
-		}
-
-		if res.Written() {
+		if doneProcessing(res, ctx) {
 			return
 		}
 	}

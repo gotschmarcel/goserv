@@ -13,7 +13,7 @@ import (
 // Note that most methods return the Router itself to allow method chaining.
 // Some methods like .Route or .SubRouter return the created instances instead.
 type Router struct {
-	// Handles errors set on the ResponseWriter with .SetError(err), not found errors
+	// Handles errors set on the RequestContext with .Error, not found errors
 	// and recovered panics.
 	ErrorHandler ErrorHandlerFunc
 
@@ -139,66 +139,49 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 		return
 	}
 
-	err := res.Error()
-	if err == nil {
-		err = ErrNotFound
+	if ctx.err == nil {
+		ctx.Error(ErrNotFound, http.StatusNotFound)
 	}
 
-	r.ErrorHandler(res, req, err)
+	r.ErrorHandler(res, req, ctx.err)
 }
 
 func (r *Router) invokeHandlers(res ResponseWriter, req *Request, ctx *RequestContext) {
 	path := req.sanitizedPath[len(r.path):] // Strip own prefix
 
-	paramInvokedMem := make(map[string]bool)
+	paramInvoked := make(map[string]bool)
 
 	for _, route := range r.routes {
 		if !route.match(path) {
 			continue
 		}
 
+		// Call param handlers in the same order in which the parameters appear in the path.
 		route.fillParams(req, ctx.params)
-		if !r.handleParams(res, req, route.params(), ctx.params, paramInvokedMem) {
-			return
+		for _, name := range route.params() {
+			if paramInvoked[name] {
+				continue
+			}
+
+			value := ctx.Param(name)
+
+			for _, paramHandler := range r.paramHandlers[name] {
+				paramHandler(res, req, value)
+
+				if doneProcessing(res, ctx) {
+					return
+				}
+			}
+
+			paramInvoked[name] = true
 		}
 
 		route.ServeHTTP(res, req)
 
-		if res.Error() != nil {
-			return
-		}
-
-		if res.Written() {
+		if doneProcessing(res, ctx) {
 			return
 		}
 	}
-}
-
-func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, params params, invoked map[string]bool) bool {
-	// Call param handlers in the same order in which the parameters appear in the path.
-	for _, name := range orderedParams {
-		if invoked[name] {
-			continue
-		}
-
-		value := params[name]
-
-		for _, paramHandler := range r.paramHandlers[name] {
-			paramHandler(res, req, value)
-
-			if res.Error() != nil {
-				return false
-			}
-
-			if res.Written() {
-				return false
-			}
-		}
-
-		invoked[name] = true
-	}
-
-	return true
 }
 
 func (r *Router) addRoute(route *Route) *Router {

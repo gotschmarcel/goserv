@@ -21,8 +21,8 @@ func TestRecovery(t *testing.T) {
 	})
 
 	var err error
-	server.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
-		err = e
+	server.ErrorHandler = func(res ResponseWriter, req *Request, e *ContextError) {
+		err = e.Err
 	}
 
 	r, _ := http.NewRequest(http.MethodGet, "/", nil)

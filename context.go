@@ -9,6 +9,7 @@ package goserv
 type RequestContext struct {
 	store  anyMap
 	params params
+	err    *ContextError
 }
 
 // Set sets the value for the specified the key. It replaces any existing values.
@@ -39,10 +40,20 @@ func (c *RequestContext) Param(name string) string {
 	return c.params[name]
 }
 
+// Error sets a ContextError which will be passed to the next error handler.
+// Calling Error twice will cause a runtime panic!
+func (c *RequestContext) Error(err error, code int) {
+	if c.err != nil {
+		panic("RequestContext: called .Error() twice")
+	}
+	c.err = &ContextError{err, code}
+}
+
 func newRequestContext() *RequestContext {
 	return &RequestContext{
 		store:  make(anyMap),
 		params: make(params),
+		err:    nil,
 	}
 }
 

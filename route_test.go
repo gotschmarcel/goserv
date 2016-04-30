@@ -16,6 +16,9 @@ func TestRouteHandlerChain(t *testing.T) {
 	req := &Request{&http.Request{Method: http.MethodGet}, "/"}
 	history := &historyWriter{}
 
+	createRequestContext(req)
+	ctx := Context(req)
+
 	route := newRoute("/", false, false)
 
 	route.All(func(ResponseWriter, *Request) {
@@ -40,7 +43,7 @@ func TestRouteHandlerChain(t *testing.T) {
 	})
 
 	route.ServeHTTP(res, req)
-	if err := res.Error(); err != nil {
+	if err := ctx.err; err != nil {
 		t.Errorf("Serve error: %v", err)
 	}
 

@@ -9,7 +9,7 @@ package goserv
 // request processing.
 //
 // A ErrorHandlerFunc should always write a response!
-type ErrorHandlerFunc func(ResponseWriter, *Request, error)
+type ErrorHandlerFunc func(ResponseWriter, *Request, *ContextError)
 
 // A Handler processes an HTTP request and may respond to it.
 type Handler interface {

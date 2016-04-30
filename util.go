@@ -59,3 +59,7 @@ func SanitizePath(p string) string {
 
 	return p
 }
+
+func doneProcessing(w ResponseWriter, ctx *RequestContext) bool {
+	return w.Written() || ctx.err != nil
+}

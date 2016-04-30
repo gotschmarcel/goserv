@@ -31,18 +31,11 @@ type ResponseWriter interface {
 	// If no status was written 0 is returned.
 	Code() int
 
-	// Returns any error set with SetError() or nil if none was set.
-	Error() error
-
-	// Sets a response error which will be passed to the ErrorHandler
-	// by the Server/Router.
-	SetError(error)
-
 	// WriteJSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
-	WriteJSON(interface{})
+	WriteJSON(interface{}) error
 
 	// WriteString sends a simple plain text response.
-	WriteString(string)
+	WriteString(string) error
 
 	// Redirect replies to the request with a redirect url. The specified code should
 	// be in the 3xx range.
@@ -52,7 +45,6 @@ type ResponseWriter interface {
 type responseWriter struct {
 	w      http.ResponseWriter
 	status int
-	err    error
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -80,30 +72,22 @@ func (r *responseWriter) Code() int {
 	return r.status
 }
 
-func (r *responseWriter) Error() error {
-	return r.err
-}
-
-func (r *responseWriter) SetError(err error) {
-	if r.err != nil {
-		panic("error set twice")
-	}
-
-	r.err = err
-}
-
-func (r *responseWriter) WriteJSON(v interface{}) {
+func (r *responseWriter) WriteJSON(v interface{}) error {
 	r.w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(r).Encode(v); err != nil {
-		r.SetError(err)
+		return err
 	}
+
+	return nil
 }
 
-func (r *responseWriter) WriteString(data string) {
+func (r *responseWriter) WriteString(data string) error {
 	if _, err := io.WriteString(r, data); err != nil {
-		r.SetError(err)
+		return err
 	}
+
+	return nil
 }
 
 func (r *responseWriter) Redirect(req *Request, url string, code int) {

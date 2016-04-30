@@ -37,7 +37,7 @@ func (h historyHandler) ParamHandler() ParamHandlerFunc {
 
 func (h historyHandler) HandlerWithError(v string) HandlerFunc {
 	return HandlerFunc(func(w ResponseWriter, r *Request) {
-		w.SetError(fmt.Errorf(v))
+		Context(r).Error(fmt.Errorf(v), 500)
 	})
 }
 
@@ -106,8 +106,8 @@ func TestRouter(t *testing.T) {
 		r.URL, _ = url.Parse(test.path)
 		h.Clear()
 
-		router.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
-			err = e
+		router.ErrorHandler = func(res ResponseWriter, req *Request, e *ContextError) {
+			err = e.Err
 		}
 
 		req := newRequest(r)

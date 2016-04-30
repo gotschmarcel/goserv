@@ -88,7 +88,7 @@ func (s *Server) Static(prefix string, dir http.Dir) {
 
 func (s *Server) handleRecovery(res ResponseWriter, req *Request) {
 	if r := recover(); r != nil {
-		s.ErrorHandler(res, req, fmt.Errorf("Panic: %v", r))
+		s.ErrorHandler(res, req, &ContextError{fmt.Errorf("Panic: %v", r), http.StatusInternalServerError})
 	}
 }
 
