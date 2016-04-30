@@ -20,8 +20,8 @@
 // To start handling things we must register handlers to paths using one of the Server's
 // embedded Router functions, like Get.
 //
-//      server.Get("/", func (res goserv.ResponseWriter, req *goserv.Request) {
-//              res.WriteString("Welcome Home")
+//      server.Get("/", func (w http.ResponseWriter, r *http.Request) {
+//              goserv.WriteString(w, "Welcome Home")
 //      })
 //
 // The first argument in the Get() call is the path for which the
@@ -32,17 +32,10 @@
 // if the request method is "GET". There are a lot more methods like this one available, just take
 // a look at the documentation of the Router or Route.
 //
-// At this point it is worth noting that goserv provides it's own Handler and HandlerFunc types using the
-// goserv.ResponseWriter and goserv.Request. This means that all http.Handlers must be wrapped before
-// they are passed to a goserv.Router. To make this more convenient two functions called WrapHTTPHandler
-// and WrapHTTPHandlerFunc exist.
-//
-//      server.Get("/", WrapHTTPHandler(httpHandler))
-//
 // Sometimes it is useful to have handlers that are invoked all the time, also known as middleware.
 // To register middleware use the Use() function.
 //
-//      server.Use(func (res goserv.ResponseWriter, req *goserv.Request) {
+//      server.Use(func(w http.ResponseWriter, r *http.Request) {
 //              log.Printf("Access %s %s", req.Method, req.URL.String())
 //      })
 //
