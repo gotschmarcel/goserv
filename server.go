@@ -73,7 +73,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 //	}
 //
 func (s *Server) Static(prefix string, dir http.Dir) {
-	s.All(prefix+"*", http.StripPrefix(prefix, http.FileServer(dir)).ServeHTTP)
+	s.SubRouter(prefix).UseHandler(http.StripPrefix(prefix, http.FileServer(dir)))
 }
 
 // NewServer returns a newly allocated and initialized Server instance.
