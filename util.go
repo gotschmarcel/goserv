@@ -6,6 +6,7 @@ package goserv
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	gopath "path"
@@ -71,6 +72,13 @@ func WriteString(w http.ResponseWriter, s string) error {
 	}
 
 	return nil
+}
+
+// WriteStringf writes a formatted string to the ResponseWriter utilizing fmt.Fprintf. It also
+// sets the Content-Type to "text/plain; charset=utf8".
+func WriteStringf(w http.ResponseWriter, format string, v ...interface{}) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	fmt.Fprintf(w, format, v...)
 }
 
 // ReadJSONBody decodes the request's body utilizing encoding/json. The body
