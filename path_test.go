@@ -25,7 +25,7 @@ func TestPathComponents(t *testing.T) {
 	tests := []struct {
 		Path, TestPath string
 		Match          bool
-		Params         Params
+		Params         params
 		Strict         bool
 		Prefix         bool
 		Err            error
@@ -93,21 +93,21 @@ func TestPathComponents(t *testing.T) {
 		{
 			Path:     "/:id",
 			TestPath: "/tab",
-			Params:   Params{"id": "tab"},
+			Params:   params{"id": "tab"},
 			Match:    true,
 			Regexp:   "^/(?P<id>[^/]+)/?$",
 		},
 		{
 			Path:     "/:id1/abc/:id2",
 			TestPath: "/tab/abc/akad",
-			Params:   Params{"id1": "tab", "id2": "akad"},
+			Params:   params{"id1": "tab", "id2": "akad"},
 			Match:    true,
 			Regexp:   "^/(?P<id1>[^/]+)/abc/(?P<id2>[^/]+)/?$",
 		},
 		{
 			Path:     "/:id1(\\d+)",
 			TestPath: "/12345",
-			Params:   Params{"id1": "12345"},
+			Params:   params{"id1": "12345"},
 			Match:    true,
 			Regexp:   "^/(?P<id1>\\d+)/?$",
 		},
@@ -217,18 +217,18 @@ func TestPathComponents(t *testing.T) {
 
 		// Test Params
 		if len(test.Params) > 0 {
-			goreq, _ := http.NewRequest(http.MethodGet, test.TestPath, nil)
-			req := newRequest(goreq)
+			req, _ := http.NewRequest(http.MethodGet, test.TestPath, nil)
 
 			if !path.ContainsParams() {
 				t.Error("Expected path to have params")
 				continue
 			}
 
-			path.FillParams(req)
+			params := make(params)
+			path.FillParams(req.URL.Path, params)
 
 			for name, testValue := range test.Params {
-				value, ok := req.Params[name]
+				value, ok := params[name]
 
 				if !ok {
 					t.Errorf("Missing parameter '%s'", name)

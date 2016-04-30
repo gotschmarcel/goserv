@@ -5,7 +5,6 @@
 package goserv
 
 import (
-	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,15 +14,15 @@ import (
 func TestRecovery(t *testing.T) {
 	server := NewServer()
 	server.PanicRecovery = true
-	expectedErr := "Panic: template engine not set"
+	expectedErr := "Panic: I am panicked"
 
-	server.Get("/", func(res ResponseWriter, req *Request) {
-		res.Render("none", nil)
+	server.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		panic("I am panicked")
 	})
 
 	var err error
-	server.ErrorHandler = func(res ResponseWriter, req *Request, e error) {
-		err = e
+	server.ErrorHandler = func(w http.ResponseWriter, r *http.Request, e *ContextError) {
+		err = e.Err
 	}
 
 	r, _ := http.NewRequest(http.MethodGet, "/", nil)
@@ -83,30 +82,23 @@ func TestStatic(t *testing.T) {
 	}
 }
 
-func TestRenderer(t *testing.T) {
+func TestServerContext(t *testing.T) {
 	server := NewServer()
-	locals := &struct{ Title string }{"MyTitle"}
 
-	// Setup renderer with initial template cache
-	server.TemplateRoot = "/views"
-	server.TemplateEngine = NewStdTemplateEngine(".tpl", true)
-	server.TemplateEngine.(*stdTemplateEngine).tpl = template.Must(template.New("my.tpl").Parse("{{.Title}}"))
-
-	// Setup route
-	server.Get("/myfile", func(res ResponseWriter, req *Request) {
-		res.Render("my", locals)
+	server.Use(func(w http.ResponseWriter, r *http.Request) {
+		ctx := Context(r)
+		ctx.Set("test_key", "test_value")
 	})
 
-	r, _ := http.NewRequest(http.MethodGet, "/myfile", nil)
-	w := httptest.NewRecorder()
+	server.Use(func(w http.ResponseWriter, r *http.Request) {
+		ctx := Context(r)
 
-	server.ServeHTTP(w, r)
+		if !ctx.Exists("test_key") {
+			t.Fatal("Missing key: test_key")
+		}
 
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status OK (200), not %s (%d)", http.StatusText(w.Code), w.Code)
-	}
-
-	if content := w.Body.String(); content != "MyTitle" {
-		t.Errorf("Expected content to be 'MyTitle' not '%s'", content)
-	}
+		if v, ok := ctx.Get("test_key").(string); !ok || v != "test_value" {
+			t.Errorf("Wrong key value, wanted: %q, got: %q", "test_value", v)
+		}
+	})
 }

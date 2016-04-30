@@ -13,34 +13,22 @@ import (
 func TestRouteHandlerChain(t *testing.T) {
 	w := httptest.NewRecorder()
 	res := &responseWriter{w: w}
-	req := &Request{&http.Request{Method: http.MethodGet}, &Context{}, nil, "/"}
-	history := &historyWriter{}
+	req, _ := http.NewRequest(http.MethodGet, "/", nil)
+	history := newHistoryHandler()
+
+	createRequestContext(req)
+	ctx := Context(req)
 
 	route := newRoute("/", false, false)
 
-	route.All(func(ResponseWriter, *Request) {
-		history.WriteString("1")
-	})
+	route.All(history.Handler("1"))
+	route.All(history.Handler("2"))
+	route.Get(history.WriteHandler("3"))
+	route.Get(history.Handler("4"))
+	route.Put(history.Handler("5"))
 
-	route.All(func(ResponseWriter, *Request) {
-		history.WriteString("2")
-	})
-
-	route.Get(func(ResponseWriter, *Request) {
-		history.WriteString("3")
-		res.Write([]byte("Done"))
-	})
-
-	route.Get(func(ResponseWriter, *Request) {
-		history.WriteString("4")
-	})
-
-	route.Put(func(ResponseWriter, *Request) {
-		history.WriteString("5")
-	})
-
-	route.ServeHTTP(res, req)
-	if err := res.Error(); err != nil {
+	route.serveHTTP(res, req)
+	if err := ctx.err; err != nil {
 		t.Errorf("Serve error: %v", err)
 	}
 
@@ -58,28 +46,7 @@ func TestRouteHandlerChain(t *testing.T) {
 		t.Errorf("Wrong status code: %d != %d", res.Code(), http.StatusOK)
 	}
 
-	if w.Body.String() != "Done" {
-		t.Errorf("Wrong body content: %s != %s", w.Body.String(), "Done")
-	}
-}
-
-func TestRouteParams(t *testing.T) {
-	route := newRoute("/:p1/:p2", false, false)
-	r, _ := http.NewRequest("", "/1234/5678", nil)
-	req := newRequest(r)
-
-	route.fillParams(req)
-
-	expected := Params{"p1": "1234", "p2": "5678"}
-	for name, value := range expected {
-		v, ok := req.Params[name]
-
-		if !ok {
-			t.Errorf("Missing parameter value for '%s'", name)
-		}
-
-		if v != value {
-			t.Errorf("Wrong parameter value for '%s', %s != %s", name, v, value)
-		}
+	if w.Body.String() != "3" {
+		t.Errorf("Wrong body content: %s != %s", w.Body.String(), "3")
 	}
 }

@@ -80,12 +80,12 @@ func (p *path) Params() []string {
 	return names
 }
 
-func (p *path) FillParams(req *Request) {
+func (p *path) FillParams(path string, params params) {
 	if !p.ContainsParams() {
 		return
 	}
 
-	matches := p.params.FindAllStringSubmatch(req.sanitizedPath, -1)
+	matches := p.params.FindAllStringSubmatch(path, -1)
 	if len(matches) == 0 {
 		return
 	}
@@ -100,7 +100,7 @@ func (p *path) FillParams(req *Request) {
 			continue
 		}
 
-		req.Params[name] = value
+		params[name] = value
 	}
 }
 

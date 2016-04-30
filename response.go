@@ -5,62 +5,12 @@
 package goserv
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 )
 
-// A ResponseWriter is used to build an HTTP response.
-//
-// The ResponseWriter embeds the native http.ResponseWriter, thus
-// all fields are still available through ResponseWriter. Additionally
-// to the native http.ResponseWriter a ResponseWriter implements
-// functions to check if the body was written, the current status or
-// if an error was set.
-//
-// It also provides helper functions to make JSON responses or the
-// use of templates even easier.
-type ResponseWriter interface {
-	// Embedded http.ResponseWriter interface.
-	http.ResponseWriter
-
-	// Written returns true if the response header was written.
-	Written() bool
-
-	// Returns the status code written to the response header.
-	// If no status was written 0 is returned.
-	Code() int
-
-	// Returns any error set with SetError() or nil if none was set.
-	Error() error
-
-	// Sets a response error which will be passed to the ErrorHandler
-	// by the Server/Router.
-	SetError(error)
-
-	// Render renders the template with the given name and locals.
-	// The result is written to the body.
-	//
-	// Render works only if a TemplateEngine is registered to the
-	// main Server and results in a panic otherwise.
-	Render(string, interface{})
-
-	// WriteJSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
-	WriteJSON(interface{})
-
-	// WriteString sends a simple plain text response.
-	WriteString(string)
-
-	// Redirect replies to the request with a redirect url. The specified code should
-	// be in the 3xx range.
-	Redirect(req *Request, url string, code int)
-}
-
 type responseWriter struct {
 	w      http.ResponseWriter
-	s      *Server
 	status int
-	err    error
 }
 
 func (r *responseWriter) Header() http.Header {
@@ -88,42 +38,6 @@ func (r *responseWriter) Code() int {
 	return r.status
 }
 
-func (r *responseWriter) Error() error {
-	return r.err
-}
-
-func (r *responseWriter) SetError(err error) {
-	if r.err != nil {
-		panic("error set twice")
-	}
-
-	r.err = err
-}
-
-func (r *responseWriter) Render(name string, locals interface{}) {
-	if err := r.s.renderView(r, name, locals); err != nil {
-		r.SetError(err)
-	}
-}
-
-func (r *responseWriter) WriteJSON(v interface{}) {
-	r.w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(r).Encode(v); err != nil {
-		r.SetError(err)
-	}
-}
-
-func (r *responseWriter) WriteString(data string) {
-	if _, err := io.WriteString(r, data); err != nil {
-		r.SetError(err)
-	}
-}
-
-func (r *responseWriter) Redirect(req *Request, url string, code int) {
-	http.Redirect(r, req.Request, url, code)
-}
-
-func newResponseWriter(w http.ResponseWriter, server *Server) ResponseWriter {
-	return &responseWriter{w: w, s: server}
+func newResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{w: w}
 }
