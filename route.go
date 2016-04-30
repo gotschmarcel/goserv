@@ -71,10 +71,6 @@ func (r *Route) Patch(fn HandlerFunc) *Route {
 // The processing stops as soon as a handler writes a response or set's an error
 // on the ResponseWriter.
 func (r *Route) ServeHTTP(res ResponseWriter, req *Request) {
-	if r.containsParams() && len(req.Params) == 0 {
-		r.fillParams(req)
-	}
-
 	for _, handler := range r.methods[req.Method] {
 		handler(res, req)
 
@@ -100,8 +96,12 @@ func (r *Route) params() []string {
 	return r.path.Params()
 }
 
-func (r *Route) fillParams(req *Request) {
-	r.path.FillParams(req)
+func (r *Route) fillParams(req *Request, params map[string]string) {
+	if !r.path.ContainsParams() {
+		return
+	}
+
+	r.path.FillParams(req.sanitizedPath, params)
 }
 
 func (r *Route) addMethodHandlerFunc(method string, fn HandlerFunc) {

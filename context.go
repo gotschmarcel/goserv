@@ -4,9 +4,11 @@
 
 package goserv
 
-// RequestContext stores key-value pairs supporting all data types.
+// RequestContext stores key-value pairs supporting all data types and
+// capture URL parameter values accessible by their parameter name.
 type RequestContext struct {
-	store map[string]interface{}
+	store  anyMap
+	params params
 }
 
 // Set sets the value for the specified the key. It replaces any existing values.
@@ -31,8 +33,17 @@ func (c *RequestContext) Exists(key string) bool {
 	return exists
 }
 
+// Param returns the capture URL parameter value for the given parameter name. The name is
+// the one specified in one of the routing functions without the leading ":".
+func (c *RequestContext) Param(name string) string {
+	return c.params[name]
+}
+
 func newRequestContext() *RequestContext {
-	return &RequestContext{make(map[string]interface{})}
+	return &RequestContext{
+		store:  make(anyMap),
+		params: make(params),
+	}
 }
 
 // Stores a RequestContext for each Request.
@@ -48,3 +59,6 @@ func Context(r *Request) *RequestContext {
 func createRequestContext(r *Request) {
 	requestContextMap[r] = newRequestContext()
 }
+
+type params map[string]string
+type anyMap map[string]interface{}

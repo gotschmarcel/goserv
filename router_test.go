@@ -110,7 +110,9 @@ func TestRouter(t *testing.T) {
 			err = e
 		}
 
-		router.ServeHTTP(newResponseWriter(w), newRequest(r))
+		req := newRequest(r)
+		createRequestContext(req)
+		router.ServeHTTP(newResponseWriter(w), req)
 
 		if test.err != nil {
 			if err == nil {

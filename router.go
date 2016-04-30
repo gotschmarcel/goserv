@@ -131,7 +131,9 @@ func (r *Router) Path() string {
 //
 // Errors are only processed if an ErrorHandler was configured.
 func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
-	r.invokeHandlers(res, req)
+	ctx := Context(req)
+
+	r.invokeHandlers(res, req, ctx)
 
 	if res.Written() || r.ErrorHandler == nil {
 		return
@@ -145,7 +147,7 @@ func (r *Router) ServeHTTP(res ResponseWriter, req *Request) {
 	r.ErrorHandler(res, req, err)
 }
 
-func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
+func (r *Router) invokeHandlers(res ResponseWriter, req *Request, ctx *RequestContext) {
 	path := req.sanitizedPath[len(r.path):] // Strip own prefix
 
 	paramInvokedMem := make(map[string]bool)
@@ -155,8 +157,8 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 			continue
 		}
 
-		route.fillParams(req)
-		if !r.handleParams(res, req, route.params(), paramInvokedMem) {
+		route.fillParams(req, ctx.params)
+		if !r.handleParams(res, req, route.params(), ctx.params, paramInvokedMem) {
 			return
 		}
 
@@ -172,14 +174,14 @@ func (r *Router) invokeHandlers(res ResponseWriter, req *Request) {
 	}
 }
 
-func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, invoked map[string]bool) bool {
+func (r *Router) handleParams(res ResponseWriter, req *Request, orderedParams []string, params params, invoked map[string]bool) bool {
 	// Call param handlers in the same order in which the parameters appear in the path.
 	for _, name := range orderedParams {
 		if invoked[name] {
 			continue
 		}
 
-		value := req.Params.Get(name)
+		value := params[name]
 
 		for _, paramHandler := range r.paramHandlers[name] {
 			paramHandler(res, req, value)
