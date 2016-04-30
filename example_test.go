@@ -5,6 +5,7 @@
 package goserv_test
 
 import (
+	"fmt"
 	"github.com/gotschmarcel/goserv"
 	"log"
 	"net/http"
@@ -97,6 +98,38 @@ func ExampleServer_json() {
 		}
 
 		log.Println(data)
+	})
+
+	log.Fatalln(server.Listen(":12345"))
+}
+
+func ExampleServer_parameters() {
+	// Use URL parameters:
+	//
+	// URL parameters can be specified by prefixing the name with a ":" in the handler path.
+	// The capture value can be retrieved from the RequestContext using the .Param method and
+	// the parameter' name.
+	//
+	// Servers and Routers both support parameter handlers which can be added using the
+	// .Param method, i.e. server.Param(...). The first argument is the name of the parameter
+	// (without the leading ":"). The parameter handlers are always invoked once before
+	// the request handlers get invoked.
+	//
+	server := goserv.NewServer()
+
+	server.Get("/resource/:resource_id", func(w http.ResponseWriter, r *http.Request) {
+		id := goserv.Context(r).Param("resource_id")
+		goserv.WriteStringf(w, "Requested resource: %s", id)
+	})
+
+	server.Param("resource_id", func(w http.ResponseWriter, r *http.Request, id string) {
+		// Some sort of validation.
+		if len(id) < 12 {
+			goserv.Context(r).Error(fmt.Errorf("Invalid id"), http.StatusBadRequest)
+			return
+		}
+
+		log.Printf("Requesting resource: %s", id)
 	})
 
 	log.Fatalln(server.Listen(":12345"))
