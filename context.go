@@ -15,40 +15,40 @@ type RequestContext struct {
 }
 
 // Set sets the value for the specified the key. It replaces any existing values.
-func (c *RequestContext) Set(key string, value interface{}) {
-	c.store[key] = value
+func (r *RequestContext) Set(key string, value interface{}) {
+	r.store[key] = value
 }
 
 // Get retrieves the value for key. If the key doesn't exist in the RequestContext,
 // Get returns nil.
-func (c *RequestContext) Get(key string) interface{} {
-	return c.store[key]
+func (r *RequestContext) Get(key string) interface{} {
+	return r.store[key]
 }
 
 // Delete deletes the value associated with key. If the key doesn't exist nothing happens.
-func (c *RequestContext) Delete(key string) {
-	delete(c.store, key)
+func (r *RequestContext) Delete(key string) {
+	delete(r.store, key)
 }
 
 // Exists returns true if the specified key exists in the RequestContext, otherwise false is returned.
-func (c *RequestContext) Exists(key string) bool {
-	_, exists := c.store[key]
+func (r *RequestContext) Exists(key string) bool {
+	_, exists := r.store[key]
 	return exists
 }
 
 // Param returns the capture URL parameter value for the given parameter name. The name is
 // the one specified in one of the routing functions without the leading ":".
-func (c *RequestContext) Param(name string) string {
-	return c.params[name]
+func (r *RequestContext) Param(name string) string {
+	return r.params[name]
 }
 
 // Error sets a ContextError which will be passed to the next error handler.
 // Calling Error twice will cause a runtime panic!
-func (c *RequestContext) Error(err error, code int) {
-	if c.err != nil {
+func (r *RequestContext) Error(err error, code int) {
+	if r.err != nil {
 		panic("RequestContext: called .Error() twice")
 	}
-	c.err = &ContextError{err, code}
+	r.err = &ContextError{err, code}
 }
 
 func newRequestContext() *RequestContext {
