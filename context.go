@@ -6,8 +6,14 @@ package goserv
 
 import "net/http"
 
-// RequestContext stores key-value pairs supporting all data types and
-// capture URL parameter values accessible by their parameter name.
+// RequestContext allows sharing of data between handlers by storing
+// key-value pairs of arbitrary types. It also provides the captured
+// URL parameter values depending on the current route.
+//
+// Any occuring errors during the processing of handlers can be
+// set on the RequestContext using .Error. By setting an error
+// all Routers and Routes will stop processing immediately and the
+// error is passed to the next error handler.
 type RequestContext struct {
 	store  anyMap
 	params params
@@ -42,8 +48,10 @@ func (r *RequestContext) Param(name string) string {
 	return r.params[name]
 }
 
-// Error sets a ContextError which will be passed to the next error handler.
-// Calling Error twice will cause a runtime panic!
+// Error sets a ContextError which will be passed to the next error handler and
+// forces all Routers and Routes to stop processing.
+//
+// Note: calling Error twice will cause a runtime panic!
 func (r *RequestContext) Error(err error, code int) {
 	if r.err != nil {
 		panic("RequestContext: called .Error() twice")
