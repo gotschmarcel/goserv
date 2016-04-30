@@ -5,7 +5,6 @@
 package goserv
 
 import (
-	"encoding/json"
 	"net/http"
 )
 
@@ -18,21 +17,6 @@ type Request struct {
 	*http.Request
 
 	sanitizedPath string
-}
-
-// ReadJSON parses the request's body using the encoding/json Decoder. In case
-// of a decoding error the error is returned.
-//
-// Note: The request's body is closed after calling this method.
-func (r *Request) ReadJSON(v interface{}) error {
-	err := json.NewDecoder(r.Body).Decode(v)
-	r.Body.Close()
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func newRequest(r *http.Request) *Request {

@@ -88,6 +88,19 @@ func WriteString(w ResponseWriter, s string) error {
 	return nil
 }
 
+// ReadJSONBody decodes the request's body utilizing encoding/json. The body
+// is closed after the decoding and any errors occured are returned.
+func ReadJSONBody(r *Request, result interface{}) error {
+	err := json.NewDecoder(r.Body).Decode(result)
+	r.Body.Close()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // Returns true if either a response was written or a ContextError occured.
 func doneProcessing(w ResponseWriter, ctx *RequestContext) bool {
 	return w.Written() || ctx.err != nil
