@@ -5,8 +5,6 @@
 package goserv
 
 import (
-	"encoding/json"
-	"io"
 	"net/http"
 )
 
@@ -30,12 +28,6 @@ type ResponseWriter interface {
 	// Returns the status code written to the response header.
 	// If no status was written 0 is returned.
 	Code() int
-
-	// WriteJSON sends a JSON response by encoding the input using json.Encoder from encoding/json.
-	WriteJSON(interface{}) error
-
-	// WriteString sends a simple plain text response.
-	WriteString(string) error
 
 	// Redirect replies to the request with a redirect url. The specified code should
 	// be in the 3xx range.
@@ -70,24 +62,6 @@ func (r *responseWriter) Written() bool {
 
 func (r *responseWriter) Code() int {
 	return r.status
-}
-
-func (r *responseWriter) WriteJSON(v interface{}) error {
-	r.w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(r).Encode(v); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *responseWriter) WriteString(data string) error {
-	if _, err := io.WriteString(r, data); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (r *responseWriter) Redirect(req *Request, url string, code int) {

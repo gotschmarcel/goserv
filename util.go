@@ -5,6 +5,8 @@
 package goserv
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	gopath "path"
 	"strings"
@@ -60,6 +62,33 @@ func SanitizePath(p string) string {
 	return p
 }
 
+// WriteJSON writes the passed value as JSON to the ResponseWriter utilizing the
+// encoding/json package. It also sets the Content-Type header to "application/json".
+// Any errors occured during encoding are returned.
+func WriteJSON(w ResponseWriter, v interface{}) error {
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// WriteString writes the s to the ResponseWriter utilizing io.WriteString. It also
+// sets the Content-Type to "text/plain; charset=utf8".
+// Any errors occured during Write are returned.
+func WriteString(w ResponseWriter, s string) error {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
+	if _, err := io.WriteString(w, s); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Returns true if either a response was written or a ContextError occured.
 func doneProcessing(w ResponseWriter, ctx *RequestContext) bool {
 	return w.Written() || ctx.err != nil
 }
