@@ -7,6 +7,7 @@ package goserv
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // A Router dispatches incoming requests to matching routes and routers.
@@ -152,7 +153,7 @@ func (r *Router) serveHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) invokeHandlers(res http.ResponseWriter, req *http.Request, ctx *RequestContext) {
-	path := SanitizePath(req.URL.Path)[len(r.path):] // Strip own prefix
+	path := strings.TrimPrefix(SanitizePath(req.URL.Path), r.path)
 
 	paramInvoked := make(map[string]bool)
 

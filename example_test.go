@@ -56,6 +56,6 @@ func ExampleServer_static() {
 	// Example file server:
 	server := goserv.NewServer()
 
-	server.Static("/", "/usr/share/doc")
+	server.SubRouter("/").UseHandler(goserv.FileServer("/usr/share/doc", "/", ""))
 	log.Fatalln(server.Listen(":12345"))
 }

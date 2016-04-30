@@ -55,27 +55,6 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.serveHTTP(iw, r)
 }
 
-// Static registers a http.FileServer for the specified directory under the given
-// prefix.
-//
-// Example:
-//	package main
-//
-//	import (
-//		"github.com/gotschmarcel/goserv"
-//	)
-//
-//	func main() {
-//		server := goserv.NewServer()
-//
-//		server.Static("/", "/usr/share/doc")
-//		log.Fatal(server.Listen(":12345"))
-//	}
-//
-func (s *Server) Static(prefix string, dir http.Dir) {
-	s.SubRouter(prefix).UseHandler(http.StripPrefix(prefix, http.FileServer(dir)))
-}
-
 // NewServer returns a newly allocated and initialized Server instance.
 //
 // By default the Server has no template engine, the template root is "" and
