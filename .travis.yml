@@ -1,0 +1,12 @@
+language: go
+sudo: false
+
+matrix:
+  include:
+    - go: 1.6
+    - go: tip
+
+script:
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go vet .
+  - go test -v -race .
