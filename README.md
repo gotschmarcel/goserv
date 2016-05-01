@@ -17,13 +17,14 @@ package main
 
 import (
 	"github.com/gotschmarcel/goserv"
+	"net/http"
 	"log"
 )
 
 func main() {
 	server := goserv.NewServer()
-	server.Get("/", func (w goserv.ResponseWriter, r *goserv.Request) {
-		w.WriteString("Welcome Home")
+	server.Get("/", func (w http.ResponseWriter, r *http.Request) {
+		goserv.WriteString(w, "Welcome Home")
 	}
 	log.Fatalln(server.Listen(":12345"))
 }
@@ -37,15 +38,16 @@ $ go get github.com/gotschmarcel/goserv
 
 ## Features
 
+- Fully compatible with net/http
 - Robust and fast routing
 - Middleware handlers
 - Nested routers
-- Static file serving
-- Template rendering
+- Improved file server
 - Request context
 - URL parameters
-- Improved response building
-- Support for http.Handler
+- Response and request helpers
+- Centralized error handling
+
 
 ## Examples
 
