@@ -1,6 +1,6 @@
 # goserv
 
-![GoServ](logo/Goserv_Logo_400.png)
+![GoServ](logo/Goserv_Logo_300.png)
 
 A fast, easy and minimalistic framework for
 web applications in Go.
