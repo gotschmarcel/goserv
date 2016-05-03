@@ -54,30 +54,15 @@ func (r *regexpMatcher) Match(path string) bool {
 type path struct {
 	matcher
 	params *regexp.Regexp
+	names  []string
 }
 
 func (p *path) ContainsParams() bool {
-	return p.params != nil
+	return len(p.names) > 0
 }
 
 func (p *path) Params() []string {
-	if !p.ContainsParams() {
-		return nil
-	}
-
-	subexpNames := p.params.SubexpNames()
-	names := make([]string, 0, p.params.NumSubexp())
-
-	// Filter unnamed subexpressions.
-	for _, name := range subexpNames {
-		if len(name) == 0 {
-			continue
-		}
-
-		names = append(names, name)
-	}
-
-	return names
+	return p.names
 }
 
 func (p *path) FillParams(path string, params params) {
@@ -158,6 +143,8 @@ func (p *pathParser) Parse(pattern string, strict, prefix bool) (*path, error) {
 	p.Reset()
 	p.p = &runeStream{data: []rune(pattern)}
 
+	var paramNames []string
+
 	// Write start.
 	p.rxBuf.WriteByte('^')
 
@@ -194,7 +181,15 @@ func (p *pathParser) Parse(pattern string, strict, prefix bool) (*path, error) {
 			_, err = p.rxBuf.WriteRune(r)
 		case ':':
 			p.simple = false
-			err = p.param()
+
+			var name string
+			name, err = p.param()
+
+			if err != nil {
+				break
+			}
+
+			paramNames = append(paramNames, name)
 		default:
 			_, err = p.pBuf.WriteRune(r)
 		}
@@ -209,15 +204,15 @@ func (p *pathParser) Parse(pattern string, strict, prefix bool) (*path, error) {
 
 	// Check all matcher
 	if p.rxBuf.String() == "^/(.*)" {
-		return &path{&allMatcher{}, nil}, nil
+		return &path{matcher: &allMatcher{}}, nil
 	}
 
 	if p.simple {
 		if prefix {
-			return &path{&stringPrefixMatcher{p.p.String()}, nil}, nil
+			return &path{matcher: &stringPrefixMatcher{p.p.String()}}, nil
 		}
 
-		return &path{&stringMatcher{p.p.String(), strict}, nil}, nil
+		return &path{matcher: &stringMatcher{p.p.String(), strict}}, nil
 	}
 
 	if !strict && !prefix {
@@ -237,7 +232,7 @@ func (p *pathParser) Parse(pattern string, strict, prefix bool) (*path, error) {
 		return nil, err
 	}
 
-	return &path{&regexpMatcher{regexpPattern}, regexpPattern}, nil
+	return &path{&regexpMatcher{regexpPattern}, regexpPattern, paramNames}, nil
 }
 
 func (p *pathParser) Reset() {
@@ -268,7 +263,10 @@ func (p *pathParser) wildcard() {
 }
 
 func (p *pathParser) group() error {
-	p.flushPart()
+	// Flush, if in the middle of something.
+	if p.pBuf.Len() > 1 {
+		p.flushPart()
+	}
 
 	// Walk over runes until end or until the group is complete.
 	quote := true
@@ -288,16 +286,16 @@ Loop:
 			p.p.Back()
 			break Loop
 		case r == '?':
-			quote = false
+			// Still quote, group incomplete
+			if level == 0 {
+				quote = false
+			}
+
 			break Loop
 		default:
 			// Copy runes until the closing brace is found.
 			p.pBuf.WriteRune(r)
 		}
-	}
-
-	if level != 0 {
-		return p.p.Err("unmatched '(' or ')'")
 	}
 
 	part := p.pBuf.String()
@@ -316,7 +314,7 @@ Loop:
 	return nil
 }
 
-func (p *pathParser) param() error {
+func (p *pathParser) param() (string, error) {
 	var name bytes.Buffer
 	var pattern bytes.Buffer
 
@@ -329,13 +327,13 @@ Loop:
 			name.WriteRune(r)
 		case r == '(':
 			if name.Len() == 0 {
-				return p.p.Err("missing parameter name")
+				return "", p.p.Err("missing parameter name")
 			}
 
 			var err error
 			pattern, err = p.paramPattern()
 			if err != nil {
-				return err
+				return "", err
 			}
 
 			break Loop
@@ -343,7 +341,7 @@ Loop:
 			p.p.Back()
 			break Loop
 		default:
-			return p.p.Err("invalid rune '" + string(r) + "'")
+			return "", p.p.Err("invalid rune '" + string(r) + "'")
 		}
 	}
 
@@ -358,7 +356,7 @@ Loop:
 	p.flushPart()
 	p.rxBuf.WriteString(part)
 
-	return nil
+	return name.String(), nil
 }
 
 func (p *pathParser) paramPattern() (bytes.Buffer, error) {
