@@ -10,10 +10,16 @@ import (
 	"net/http"
 )
 
-// ErrNotFound gets passed to a Router's ErrorHandler if
-// no route matched the request path or none of the matching routes wrote
-// a response.
-var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
+var (
+	// ErrNotFound is passed to the error handler if
+	// no route matched the request path or none of the matching routes wrote
+	// a response.
+	ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
+
+	// ErrDisallowedHost is passed to the error handler if a handler
+	// created with .AllowedHosts() found a disallowed host.
+	ErrDisallowedHost = errors.New("disallowed host")
+)
 
 // StdErrorHandler is the default ErrorHandler added to all Server instances
 // created with NewServer().
