@@ -96,5 +96,5 @@ func ReadJSONBody(r *http.Request, result interface{}) error {
 
 // Returns true if either a response was written or a ContextError occured.
 func doneProcessing(w *responseWriter, ctx *RequestContext) bool {
-	return w.Written() || ctx.err != nil
+	return w.Written() || ctx.err != nil || ctx.skip
 }

@@ -18,6 +18,7 @@ type RequestContext struct {
 	store  anyMap
 	params params
 	err    *ContextError
+	skip   bool
 }
 
 // Set sets the value for the specified the key. It replaces any existing values.
@@ -59,11 +60,24 @@ func (r *RequestContext) Error(err error, code int) {
 	r.err = &ContextError{err, code}
 }
 
+// SkipRouter tells the current router to end processing, which means that the
+// parent router will continue processing.
+//
+// Calling SkipRouter in a top level route causes a "not found" error.
+func (r *RequestContext) SkipRouter() {
+	r.skip = true
+}
+
+func (r *RequestContext) skipped() {
+	r.skip = false
+}
+
 func newRequestContext() *RequestContext {
 	return &RequestContext{
 		store:  make(anyMap),
 		params: make(params),
 		err:    nil,
+		skip:   false,
 	}
 }
 

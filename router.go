@@ -153,6 +153,8 @@ func (r *Router) serveHTTP(res http.ResponseWriter, req *http.Request) {
 }
 
 func (r *Router) invokeHandlers(res http.ResponseWriter, req *http.Request, ctx *RequestContext) {
+	defer ctx.skipped() // Clear any skip events
+
 	path := strings.TrimPrefix(SanitizePath(req.URL.Path), r.path)
 
 	paramInvoked := make(map[string]bool)
