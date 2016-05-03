@@ -38,6 +38,11 @@ func TestPathComponents(t *testing.T) {
 			TestPath: "/",
 			Match:    true,
 		},
+		{
+			Path:     "/abc//def",
+			TestPath: "/abc//def",
+			Match:    true,
+		},
 
 		// Strict vs non-strict
 		{
@@ -86,6 +91,75 @@ func TestPathComponents(t *testing.T) {
 		{
 			Path:     "/ab*",
 			TestPath: "/khi",
+			Match:    false,
+		},
+
+		// Groups
+		{
+			Path:     "/ab?c",
+			TestPath: "/abc",
+			Match:    true,
+		},
+		{
+			Path:     "/ab?c",
+			TestPath: "/ac",
+			Match:    true,
+		},
+		{
+			Path:     "/ab?c",
+			TestPath: "/akc",
+			Match:    false,
+		},
+		{
+			Path:     "/a(bc)?d",
+			TestPath: "/ad",
+			Match:    true,
+		},
+		{
+			Path:     "/a(bc)?d",
+			TestPath: "/abcd",
+			Match:    true,
+		},
+		{
+			Path:     "/a(bc)?d",
+			TestPath: "/abd",
+			Match:    false,
+		},
+		{
+			Path:     "/abc/(def)?",
+			TestPath: "/abc",
+			Match:    true,
+			Strict:   true,
+		},
+		{
+			Path:     "/abc/(def)?",
+			TestPath: "/abc/def",
+			Match:    true,
+			Strict:   true,
+		},
+		{
+			Path:     "/abc/(def)?/ghi",
+			TestPath: "/abc/ghi",
+			Match:    true,
+		},
+		{
+			Path:     "/abc/(def)?/ghi",
+			TestPath: "/abc/def/ghi",
+			Match:    true,
+		},
+		{
+			Path:     "/abc/(def)?/ghi",
+			TestPath: "/abc/jkl/ghi",
+			Match:    false,
+		},
+		{
+			Path:     "/abc/(def",
+			TestPath: "/abc/(def",
+			Match:    true,
+		},
+		{
+			Path:     "/abc/(def",
+			TestPath: "/abc",
 			Match:    false,
 		},
 
@@ -161,12 +235,8 @@ func TestPathComponents(t *testing.T) {
 			Err:  fmt.Errorf("Error at index 0, paths must start with '/'"),
 		},
 		{
-			Path: "/abc(/)",
-			Err:  fmt.Errorf("Error at index 4, unmatched '(' or ')'"),
-		},
-		{
 			Path: "/abc(:)",
-			Err:  fmt.Errorf("Error at index 4, unmatched '(' or ')'"),
+			Err:  fmt.Errorf("Error at index 6, invalid rune ')'"),
 		},
 	}
 

@@ -60,6 +60,13 @@ func (h historyHandler) HandlerWithError(v string) http.HandlerFunc {
 	}
 }
 
+func (h historyHandler) SkipRouterHandler(id string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.WriteString(id)
+		Context(r).SkipRouter()
+	}
+}
+
 func newHistoryHandler() *historyHandler {
 	return &historyHandler{&historyWriter{}}
 }
