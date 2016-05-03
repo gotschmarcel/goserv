@@ -42,7 +42,6 @@ $ go get github.com/gotschmarcel/goserv
 - Robust and fast routing
 - Middleware handlers
 - Nested routers
-- Improved file server
 - Request context
 - URL parameters
 - Response and request helpers
@@ -55,4 +54,4 @@ Examples can be found in `example_test.go`
 
 ## License
 
-MIT licensed. See the LICENSE file for more information.
+BSD licensed. See the LICENSE file for more information.
