@@ -65,6 +65,19 @@ func (r *Route) Patch(fn http.HandlerFunc) *Route {
 	return r.Method(http.MethodPatch, fn)
 }
 
+// Rest registers the given handler on all methods without a handler.
+func (r *Route) Rest(fn http.HandlerFunc) *Route {
+	for _, method := range methodNames {
+		if len(r.methods[method]) > 0 {
+			continue
+		}
+
+		r.addMethodHandlerFunc(method, fn)
+	}
+
+	return r
+}
+
 // serveHTTP processes the Request by invoking all middleware and all method handlers for the
 // corresponding method of the Request in the order they were registered.
 //

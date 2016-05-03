@@ -50,3 +50,34 @@ func TestRouteHandlerChain(t *testing.T) {
 		t.Errorf("Wrong body content: %s != %s", w.Body.String(), "3")
 	}
 }
+
+func TestRouteRest(t *testing.T) {
+	w := httptest.NewRecorder()
+	res := &responseWriter{w: w}
+	req, _ := http.NewRequest("", "/", nil)
+	history := newHistoryHandler()
+
+	createRequestContext(req)
+
+	route := newRoute("/", false, false)
+
+	route.Get(history.WriteHandler("get-handler"))
+	route.Rest(history.WriteHandler("rest-handler"))
+
+	for _, method := range methodNames {
+		req.Method = method
+
+		route.serveHTTP(res, req)
+
+		wanted := "rest-handler"
+		if method == http.MethodGet {
+			wanted = "get-handler"
+		}
+
+		if first := history.At(0); first != wanted {
+			t.Errorf("Wrong write value, wanted: %q, got: %q", "get-handler", wanted, first)
+		}
+
+		history.Clear()
+	}
+}
