@@ -17,10 +17,6 @@ var ErrNotFound = errors.New(http.StatusText(http.StatusNotFound))
 
 // StdErrorHandler is the default ErrorHandler added to all Server instances
 // created with NewServer().
-//
-// All errors, except ErrNotFound, passed to it result in an internal server error (500) including
-// the message in the response body. The ErrNotFound error results
-// in a "not found" (404) response.
 var StdErrorHandler = func(w http.ResponseWriter, r *http.Request, err *ContextError) {
 	w.WriteHeader(err.Code)
 	fmt.Fprintf(w, err.Error())
