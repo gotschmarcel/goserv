@@ -191,7 +191,7 @@ func (r *Router) invokeHandlers(res http.ResponseWriter, req *http.Request, ctx 
 }
 
 func (r *Router) handleRecovery(res http.ResponseWriter, req *http.Request) {
-	if err := recover(); err != nil {
+	if err := recover(); err != nil && r.ErrorHandler != nil {
 		r.ErrorHandler(res, req, &ContextError{fmt.Errorf("Panic: %v", err), http.StatusInternalServerError})
 	}
 }
