@@ -75,7 +75,7 @@ func TestRouteRest(t *testing.T) {
 		}
 
 		if first := history.At(0); first != wanted {
-			t.Errorf("Wrong write value, wanted: %q, got: %q", "get-handler", wanted, first)
+			t.Errorf("Wrong write value, wanted: %q, got: %q", wanted, first)
 		}
 
 		history.Clear()
