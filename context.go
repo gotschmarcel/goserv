@@ -1,10 +1,13 @@
 // Copyright 2016 Marcel Gotsch. All rights reserved.
-// Use of this source code is governed by a MIT-style
+// Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package goserv
 
-import "net/http"
+import (
+	"net/http"
+	"sync"
+)
 
 // RequestContext allows sharing of data between handlers by storing
 // key-value pairs of arbitrary types. It also provides the captured
@@ -15,6 +18,7 @@ import "net/http"
 // all Routers and Routes will stop processing immediately and the
 // error is passed to the next error handler.
 type RequestContext struct {
+	mutex  sync.RWMutex
 	store  anyMap
 	params params
 	err    *ContextError
@@ -23,23 +27,31 @@ type RequestContext struct {
 
 // Set sets the value for the specified the key. It replaces any existing values.
 func (r *RequestContext) Set(key string, value interface{}) {
+	r.mutex.Lock()
 	r.store[key] = value
+	r.mutex.Unlock()
 }
 
 // Get retrieves the value for key. If the key doesn't exist in the RequestContext,
 // Get returns nil.
 func (r *RequestContext) Get(key string) interface{} {
+	r.mutex.RLock()
+	defer r.mutex.RUnlock()
 	return r.store[key]
 }
 
 // Delete deletes the value associated with key. If the key doesn't exist nothing happens.
 func (r *RequestContext) Delete(key string) {
+	r.mutex.Lock()
 	delete(r.store, key)
+	r.mutex.Unlock()
 }
 
 // Exists returns true if the specified key exists in the RequestContext, otherwise false is returned.
 func (r *RequestContext) Exists(key string) bool {
+	r.mutex.RLock()
 	_, exists := r.store[key]
+	r.mutex.RUnlock()
 	return exists
 }
 
@@ -52,7 +64,8 @@ func (r *RequestContext) Param(name string) string {
 // Error sets a ContextError which will be passed to the next error handler and
 // forces all Routers and Routes to stop processing.
 //
-// Note: calling Error twice will cause a runtime panic!
+// Note: Calling Error from different threads can cause race conditions. Also
+// calling Error more than once causes a runtime panic!
 func (r *RequestContext) Error(err error, code int) {
 	if r.err != nil {
 		panic("RequestContext: called .Error() twice")
@@ -82,17 +95,22 @@ func newRequestContext() *RequestContext {
 }
 
 // Stores a RequestContext for each Request.
+var contextMutex sync.RWMutex
 var requestContextMap = make(map[*http.Request]*RequestContext)
 
 // Context returns the corresponding RequestContext for the given Request.
 func Context(r *http.Request) *RequestContext {
+	contextMutex.RLock()
+	defer contextMutex.RUnlock()
 	return requestContextMap[r]
 }
 
 // Stores a new RequestContext for the specified Request in the requestContextMap.
 // This may overwrite an existing RequestContext!
 func createRequestContext(r *http.Request) {
+	contextMutex.Lock()
 	requestContextMap[r] = newRequestContext()
+	contextMutex.Unlock()
 }
 
 type params map[string]string
