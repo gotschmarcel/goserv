@@ -113,5 +113,12 @@ func createRequestContext(r *http.Request) {
 	contextMutex.Unlock()
 }
 
+// Removes the RequestContext for the given Request from the requestContextMap.
+func deleteRequestContext(r *http.Request) {
+	contextMutex.Lock()
+	delete(requestContextMap, r)
+	contextMutex.Unlock()
+}
+
 type params map[string]string
 type anyMap map[string]interface{}

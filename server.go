@@ -50,7 +50,9 @@ func (s *Server) ListenTLS(addr, certFile, keyFile string) error {
 // ServeHTTP dispatches the request to the internal Router.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	iw := newResponseWriter(w)
+
 	createRequestContext(r)
+	defer deleteRequestContext(r)
 
 	s.serveHTTP(iw, r)
 }
