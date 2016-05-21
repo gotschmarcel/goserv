@@ -107,12 +107,12 @@ func (r *Route) params() []string {
 	return r.path.Params()
 }
 
-func (r *Route) fillParams(req *http.Request, params map[string]string) {
+func (r *Route) fillParams(path string, params map[string]string) {
 	if !r.path.ContainsParams() {
 		return
 	}
 
-	r.path.FillParams(SanitizePath(req.URL.Path), params)
+	r.path.FillParams(path, params)
 }
 
 func (r *Route) addMethodHandlerFunc(method string, fn http.HandlerFunc) {
