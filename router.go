@@ -165,7 +165,7 @@ func (r *Router) invokeHandlers(res http.ResponseWriter, req *http.Request, ctx 
 		}
 
 		// Call param handlers in the same order in which the parameters appear in the path.
-		route.fillParams(req, ctx.params)
+		route.fillParams(path, ctx.params)
 		for _, name := range route.params() {
 			if paramInvoked[name] {
 				continue
