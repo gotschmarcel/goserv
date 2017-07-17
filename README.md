@@ -10,8 +10,6 @@ web applications in Go.
 [![GoDoc](https://godoc.org/github.com/gotschmarcel/goserv?status.svg)](https://godoc.org/github.com/gotschmarcel/goserv)
 [![Build Status](https://travis-ci.org/gotschmarcel/goserv.svg?branch=dev)](https://travis-ci.org/gotschmarcel/goserv)
 
-**Read all about it at [goserv.it](http://goserv.it)**
-
 ```go
 package main
 
